@@ -77,7 +77,7 @@ function animate1()
                 if (!isNaN(maintbl.rows[pi].cells[2].innerHTML)) 
                 {
                   s = eval(maintbl.rows[pi].cells[1].innerHTML);
-                  maintbl.rows[pi].cells[1].innerHTML = ''+ (Math.round(s*100)/100);
+                  maintbl.rows[pi].cells[1].innerHTML = s.toFixed(3).replace(/\.000$/,'').replace(/\.([0-9])00$/,'.$1').replace(/\.([0-9][0-9])0$/,'.$1');
                  }
                  else
                  {
@@ -109,7 +109,8 @@ function animate1()
             { 
                 if (!isNaN(maintbl.rows[pi].cells[2].innerHTML) )
                 {
-                   maintbl.rows[pi].cells[3].innerHTML = eval(maintbl.rows[pi].cells[1].innerHTML.replace(/<[^>]+>/g,'')+'*'+maintbl.rows[pi].cells[2].innerHTML.replace(/<[^>]+>/g,''));
+                   try{maintbl.rows[pi].cells[3].innerHTML = eval(maintbl.rows[pi].cells[1].innerHTML.replace(/<[^>]+>/g,'')+'*'+maintbl.rows[pi].cells[2].innerHTML.replace(/<[^>]+>/g,'')).toFiexed(3).replace(/\.000$/,'').replace(/\.([0-9])00$/,'.$1').replace(/\.([0-9][0-9])0$/,'.$1');}
+                   catch(e){maintbl.rows[pi].cells[3].innerHTML = '0';}
                    maintbl.rows[pi].cells[2].innerHTML = 'x ' + maintbl.rows[pi].cells[2].innerHTML + ' = ';
                 }
                 else
@@ -148,14 +149,12 @@ function animate1()
              if ( !isNaN(maintbl.rows[pi].cells[2].innerHTML))
              {
                  s += parseFloat(maintbl.rows[pi].cells[3].innerHTML);
-                 s = Math.round(100*s)/100;
-                 maintbl.rows[pi].cells[4].innerHTML = ''+s;
+                 maintbl.rows[pi].cells[4].innerHTML =  s.toFixed(3).replace(/\.000$/,'').replace(/\.([0-9])00$/,'.$1').replace(/\.([0-9][0-9])0$/,'.$1');
              }
              else
              {
                  s2 += parseFloat(maintbl.rows[pi].cells[3].innerHTML);
-                 s2 = Math.round(100*s2)/100;
-                 maintbl.rows[pi].cells[4].innerHTML = ''+s2;
+                 maintbl.rows[pi].cells[4].innerHTML = ''+s2.replace(/\.000$/,'').replace(/\.([0-9])00$/,'.$1').replace(/\.([0-9][0-9])0$/,'.$1');
              }
           }
            

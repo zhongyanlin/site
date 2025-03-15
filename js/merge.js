@@ -4,7 +4,7 @@ function $(x)
 }
  
 let b=0, g=0;
-let bl = [0,0,0];
+ 
 let maintbl = null;
 let source0 = new Array();
 let mergebtn, matchbtn, swapbtn, headingset, headingset1;
@@ -188,8 +188,8 @@ let maxcolg = 0, maxcolb = 0;
 function matchs(x, y) {
     let M = [];
     if (x.length < 2 || y.length < 2) return M;
-    let X = x.slice(1);
-    let Y = y.slice(1);
+    let X = x;//.slice(1);
+    let Y = y;//.slice(1);
     function getColumn(matrix, colIndex) {
         return matrix.map(row => row[colIndex]);
     }
@@ -231,7 +231,17 @@ function matchs(x, y) {
         }
     }
 
-    M.sort((a, b) => b[2] - a[2]);
+    M.sort(function(a, b){ 
+        if (b[2]!=a[2]) 
+            return b[2] - a[2]; 
+        if(a[0]+a[1]-b[0]-b[1]!=0) 
+            return a[0]+a[1]-b[0]-b[1]; 
+        if(a[0] != b[0]) 
+            return a[0]-b[0];
+        if(a[1] != b[1]) 
+            return a[1]-b[1];
+        return 1;
+    });
     return M;
 }
 let  ma;
@@ -252,16 +262,86 @@ function analyze()
     }
     colorcol();
 }
+function copymat(from,to)
+{
+   if (to == null) to = new Array(from.length);
+   for (let r=0; r < from.length; r++)
+   {
+       if (to[r] == null) 
+           to[r] = new Array(from[r].length);
+       for (let c = 0; c < from[r].length; c++)
+          to[r][c] = from[r][c];
+       if (from[r].length < to[r].length)    
+           to[r].splice(from[r].length,to[r].length - from[r].length);
+   }
+   if (to.length > from.length)
+       to.splice(from.length,to.length - from.length);
+}
+function maketbl(cl, m)
+{
+    let i = 0;
+    for (; i < m.length; i++) 
+    {
+        let s = '';
+        for (let k=0; k < m[i].length; k++) 
+            if (m[i][k]!=null) 
+                s += m[i][k].trim();
+        if ( s !== '') 
+           break;
+    }
+    if (i > 0)
+       m.splice(0, i);
+    for (i=m.length-1; i>= 0; i--) 
+    {
+        let s = '';
+        for (let k=0; k < m[i].length; k++) 
+            if (m[i][k]!=null)
+                s += m[i][k].trim();
+        if (s !== '') 
+          break;
+    }
+    if (i < m.length-1)
+       m.splice(i+1,m.length - i - 1);
+    let mc = 0;
+    for (let i=0; i <m.length; i++)
+        if (mc < m[i].length)
+        {
+            mc = m[i].length;
+        }
+    if (cl == 0) maxcolb = mc;else maxcolg = mc;  
+    for (let j=0; j < mc; j++)
+    {
+            if (m[0][j]==null || m[0][j].trim() === '') 
+                m[0][j] = 'NoLabel' + (j+1);
+     }
+    let s = '<table cellpadding=4 border=1 id=tbl' + cl + ' bgcolor=#f9f9f9 style=border-collapse:collpase >';
+    for (let i=0; i <m.length; i++)
+    {
+        for (let j=m[i].length; j < mc; j++)
+        {
+             m[i][j] = '';
+        }
+        s += '<tr height=28 bgcolor=' + (i==0?'lightgray':'white') + '>';
+        for (let j=0; j < mc; j++)
+        {
+            s += '<td align=' + ( 'right width=85 ') + '><div style="' + ( "width:80px;overflow:hidden") + '" ' + (cl>0||i>0?'':' onmouseover=showfull(this) onmouseexit=showless(this) ') + '><nobr>' +  m[i][j] + '</nobr></div></td>';
+        }
+        s += '</tr>';
+    }
+      
+    let t = maintbl.rows[3].cells[cl];
+    t.innerHTML = s + '</table>';
+}
+let backupg=null; 
 function parse(cl)
 {
     if (cl==2)
     {
         let b1 = $('view');
         if (b1.value == 'Back') view(b1);
-        maxcolg = 0;
+     
     }
-    else
-        maxcolb = 0;
+    
     let delimiter = ',';
     if (cl==0)
     {
@@ -288,39 +368,7 @@ function parse(cl)
     }
         
     let m = (new CSVParse(source,'"',delimiter,'\n')).nextMatrix();
-     
-    let s = '<table cellpadding=4 border=1 id=tbl' + cl + ' bgcolor=#f9f9f9 style=border-collapse:collpase >';
-    if (m.length <2) return;
-    let l = 1; for ( ; l < m[1].length; l++)
-       if( m[1][l]!=null && (cl==0 && m[1][l].replace(/ /g,'')=='' ||  ''+ parseFloat(m[1][l].replace(/ /g,'')) != 'NaN'))
-          break;
-    bl[cl] = 0;//l;
-    //alert('bl[' + cl + ']=' + l);
-    for (let i=0; i <m.length; i++)
-    {
-        if (m[i].length < 2) 
-        {
-            m.splice(i, 1);
-            i--;
-            continue;
-        }
-        if (cl == 2 && maxcolg < m[i].length)
-        {
-            maxcolg = m[i].length;
-        }
-        else if (cl == 0 && maxcolb < m[i].length)
-        {
-            maxcolb = m[i].length;
-        }
-        s += '<tr height=28 bgcolor=' + (i==0?'lightgray':'white') + '>';
-        for (let j=0; j <  m[i].length ; j++)
-        {
-            s += '<td align=' + (j<l?'left':'right width=85 ') + '><div style="' + (j<l?"":"width:80px;overflow:hidden") + '" ' + (cl>0||i>0?'':' onmouseover=showfull(this) onmouseexit=showless(this) ') + '><nobr>' + m[i][j] + '</nobr></div></td>';
-        }
-        s += '</tr>';
-    }
-      
-    let t = maintbl.rows[3].cells[cl];
+    maketbl(cl,m);
     if (cl == 0) 
     {    
         b = m;
@@ -328,49 +376,16 @@ function parse(cl)
     else 
     {
         g = m;
+        backupg = null;
     }
     analyze();
-    t.innerHTML = s + '</table>';
-    
+     
     if ($('tbl0')!=null
         && $('tbl2')!=null)
     matchbtn.style.display = 'inline';
     if ($('tbl0')!=null)
         swapbtn.style.display = 'inline';
-    
-    let tbl = document.getElementById('tbl'+ cl);
-    if (cl == 0 && b.length > 0)
-    {
-        for (let k = 0; k < b[0].length; k++)
-            if (b[0][k] == null || b[0][k].trim() == '')
-        {
-            b[0][k] = 'nolabel' + k;
-            tbl.rows[0].cells[k].innerHTML = b[0][k];
-        }
-        for (let k = b[0].length; k < maxcolb; k++)
-        {    
-            b[0][k] = 'nolabel' + k;
-            let cl = tbl.rows[0].insertCell(-1);
-            cl.bgColor = 'lightyellow';
-            cl.innerHTML = b[0][k];
-        }
-    }
-    else if (cl == 2 && g.length > 0)
-    {
-        for (let k = 0; k < g[0].length; k++)
-            if (g[0][k] == null || g[0][k].trim() == '')
-        {
-            g[0][k] = 'nolabel' + k;
-             tbl.rows[0].cells[k].innerHTML = g[0][k];
-        }
-        for (let k = g[0].length; k < maxcolg; k++)
-        {    
-            g[0][k] = 'nolabel' + k;
-            let cl = tbl.rows[0].insertCell(-1);
-            cl.bgColor = 'lightyellow';
-            cl.innerHTML = g[0][k];
-        }
-    }
+     
     colorcol();
     if (cl == 2)
     {
@@ -485,26 +500,31 @@ function stat(arr,k)
     let brr = new Array();
     for (let j=0; j < arr.length; j++)
     {
-       let f = parseFloat(arr[j]);
-       if ('' + f != 'NaN')
-           brr[brr.length] = f;
+       if (isNaN(arr[j])) return arr[0];
+       brr.push(arr[j]);
     }
     if (brr.length == 0) return 0;
-    brr.sort((a, b) => a - b);
-    if (k==0) return brr[0];
+    brr.sort(function(a,b){
+        if (!isNaN(a) && !isNaN(b))
+            return parseFloat(a) - parseFloat(b);
+        return 1;
+    });
+    if (k==0) return ''+ brr[0];
     else if (k==2) 
-        return brr[brr.length-1];
+        return  brr[brr.length-1];
     let s = 0;
+    
     for (let j=0; j < brr.length; j++)
-        s += brr[j];
-    return (s/brr.length).toFixed(2);
+        if (isNaN(brr[j]))  return brr[0];
+        else s += parseFloat(brr[j]);
+    return (s/brr.length).toFixed(2).replace(/\.00$/,'').replace(/\.([0-9])0$/,'.$1');
 }
 let duplicate = [];
 let oldg = [];
 
 function dup(k)
 {
-    let bi = bl[0], gi = bl[2];
+   
     let tbl = $('tbl2');
     for (let y in duplicate)
     {
@@ -514,17 +534,17 @@ function dup(k)
         let s = duplicate[y];
         if (k==3)
         {
-           for (let j=gi;  j < maxcolg; j++)
+           for (let j=0;  j < maxcolg; j++)
            {
               if (oldg[y][j]!=null)
-              g[y][j] = oldg[y][j];
+                 g[y][j] = oldg[y][j];
               tbl.rows[y].cells[j].innerHTML = g[y][j];
            }
         }
         else if (k==4)
         {
            let ll = s[s.length-1];
-           for (let j=gi; j < maxcolg; j++)
+           for (let j=0; j < maxcolg; j++)
            {
               if (oldg[y][j]==null)
                   oldg[y][j] = g[y][j];
@@ -537,7 +557,7 @@ function dup(k)
            }
         }
         else
-        for (let j=gi; j < maxcolg; j++)
+        for (let j=0; j < maxcolg; j++)
         {
            
            let arr = new Array();
@@ -591,14 +611,12 @@ function colorcol()
     for (let i =0; i < tbl1.rows[0].cells.length; i++)
         tbl1.rows[0].cells[i].style.backgroundColor ='lightyellow';
     let keys = Object.keys(mapcol);
-    if (keys.length > 0){
-    tbl0.rows[0].cells[parseInt(keys[0])].style.backgroundColor = '#444444';
-    tbl1.rows[0].cells[mapcol[keys[0]]].style.backgroundColor = '#444444';
+    for (let ke in mapcol)
+    { 
+    tbl0.rows[0].cells[parseInt(ke)].style.backgroundColor = '#444444';
+    tbl1.rows[0].cells[mapcol[ke]].style.backgroundColor = '#444444';
     }
-    if (keys.length > 1){
-        tbl0.rows[0].cells[parseInt(keys[1])].style.backgroundColor = '#555555';
-        tbl1.rows[0].cells[mapcol[keys[1]]].style.backgroundColor = '#555555';
-    }
+    
 }
 function selma()
 {
@@ -616,12 +634,15 @@ function selma()
 }
 function matchcol()
 {
+    if (backupg!=null) maketbl(2,g);
     if (ma == null || ma.length == 0) return; 
-    let M = ma;
+    let M = ma; let nn = 0;
     let s = ['<table style=border-collapse:collapse border=1 cellpadding=4><tr bgcolor=#eeccee ><td>Choose</td><td style=white-space:nowrap >Column of Left</td><td style=white-space:nowrap >Column of Right</td><td>Strength</td></tr>'];
-    for (let r = 0; r < M.length && r < 7 && M[r][2] > 0.3; r++)
+    for (let r = 0; r < M.length && r < 7; r++){ nn++;
         s.push("<tr><td align=center><input id=choice" + r + " type=checkbox onclick=selma()></td><td style=white-space:nowrap >" + (M[r][0]+1) + ": " + b[0][M[r][0]] + "</td><td style=white-space:nowrap >" + (M[r][1]+1) + ": " + g[0][M[r][1]] + "</td><td>" + (100 * M[r][2]).toFixed(0) + "%</td></tr>");
+    }
     s.push("</table>");
+    
     myprompt(s.join(''), null, null, 'Column Matching Strength');
     promptwin.style.top = '300px';
     if (mapcol == null)
@@ -652,54 +673,14 @@ function matchcol()
         
     }
     matchbtn.style.display = 'inline';
-    return;
-    let str = "2 1";
-    let hint = "Enter 1st pair of matching columns like this 2 1:\n here 2 is the column on the left and 1 the column on the right";
-    let keys = Object.keys(mapcol);
-    if (keys.length>0)
-    {    
-        str = keys[0] + " " + mapcol[keys[0]];
-        hint = "Enter 1st matching column pair";
-    }
-    let x1 = null, y1;
-    if (keys.length>1)
-    {    
-        x1 = keys[1]; y1 = mapcol[x1]; 
-    }
-    let xy = prompt(hint,str);
-    if (xy == null) return;
-    
-    let xys = xy.split(/ /);
-    let X =xys[0].trim(), Y = parseInt(xys[1].trim());
-    if (isNaN(X) || ''+Y == 'NaN') return;
-    if (keys.length>0) delete mapcol[keys[0]];
-    mapcol[X] = Y;
-    
-    str = "1 2";
-    hint = "Enter  2nd pair of matching columns like this 1 2:\n here 1 is the column on the left and 2 the column on the right\nIf none, Cancel";
-    if (x1!=null)
-    {   
-        str = x1 + " " + y1;
-        hint = "Enter 2nd matching column pair";
-        delete mapcol[x1];
-    }
-    
-    xy = prompt(hint,str);
-    if (xy!=null)
-    { 
-        let xys = xy.split(/ /);
-        let X = xys[0].trim(), Y = parseInt(xys[1].trim());
-        if (isNaN(X) || ''+Y == 'NaN') return;
-        mapcol[X] = Y;
-    }
-    
-    colorcol();
-    matchbtn.style.display = 'inline';
 }
- 
+
 function match()
 {
     closeprompt();
+   // copymat(backupg,g);
+    if (backupg!=null) g = backupg;
+    maketbl(2,g);
     duplicate = [];
     oldg = [];
     mid = 0;
@@ -710,9 +691,7 @@ function match()
         alert('Enter source and Parse first');
         return;
     }
-    
-    let bi = bl[0], gi = bl[2];
-     
+   
     let newg = new Array(b.length); 
     for (let m=0; m < b.length; m++)
         for (let j=0; j < b[m].length; j++)
@@ -796,8 +775,8 @@ function match()
     let mn = 1;
     let msg =  "<" + "li>";
     msg += "Some mismatches were found. If a manual match is found, just click the matched pair.";
-    msg += "<" + "table bgcoloe=white border=1 style=border-collapse:collapse  cellspacing=3><tr><td valign=top><div  style=background-color:blue;color:white>Left Records without Matching</div>";
-    msg += "<" + "table>";
+    msg += "<" + "table bgcolor=white border=1 style=border-collapse:collapse cellpadding=4 align=center><tr><td valign=top><div  style=background-color:blue;color:white;white-space:nowrap >Left Records without Matching</div>";
+    msg += "<" + "table cellpadding=4 >";
     let  missleft = false;
     let rw0=0, rw1=0;
     for (m=0; m < b.length; m++)
@@ -808,10 +787,17 @@ function match()
             missleft = true;
             if (m>0){
             msg +='<tr height=28>';
+            let done = [];
             for (let j1 of kes)
             {
-               let l = parseInt(j1);
-               msg += '<td bgcolor=white onclick="pair(this,' + m + ',' + (rw0++) +  ')"> ' + b[m][l] + '</td>';
+               let l = parseInt(j1); done.push(l);
+               msg += '<td bgcolor=white onclick="pair(this,' + m + ',' + (rw0++) +  ')">&nbsp;&nbsp;' + b[m][l] + '</td>';
+            }
+            for (let r = 0; r < ma.length && ma[r][2]>0.3 && r < 5; r++)
+            {
+                if (done.includes(ma[r][0])){continue;}
+                done.push(ma[r][0]);
+                 msg += '<td bgcolor=white onclick="pair(this,' + m + ',' + (rw0++) +  ')">&nbsp;&nbsp;' + b[m][ma[r][0]] + '</td>';
             }
             msg += '<' + '/tr>';
            }
@@ -823,18 +809,24 @@ function match()
             dup[m].splice(0,1);
         }
     }
-    msg += '<' + '/table><'+ '/td><td valign=top><div style=background-color:red>Right Records without Matching</div><table>';
+    msg += '<' + '/table><'+ '/td><td valign=top><div style=background-color:red;white-space:nowrap;color:white >Right Records without Matching</div><table cellpadding=4 >';
     let  missright = mism.length>0;
      
     for (let j=0; j < mism.length; j++)
     {
         let i = mism[j];
         newg[newg.length] = copyc(i, 'missed');
-        msg +='<tr height=28>';
+        msg +='<tr height=28>';let done = [];
         for (let j1 of kes)
         {
-             let l = mapcol[j1];
-             msg += '<td bgcolor=white onclick="pair1(this,' + (newg.length-1) + ',' + (rw1++) +   ')"> ' + g[i][l] + '</td>';
+             let l = mapcol[j1];done.push(l);
+             msg += '<td bgcolor=white onclick="pair1(this,' + (newg.length-1) + ',' + (rw1++) +   ')">&nbsp;&nbsp;' + g[i][l] + '</td>';
+        }
+        for (let r = 0; r < ma.length && ma[r][2]>0.3 && r < 5; r++)
+        {
+                if (done.includes(ma[r][1])){continue;}
+                done.push(ma[r][1]);
+                 msg += '<td bgcolor=white onclick="pair(this,' + (newg.length-1) + ',' + (rw1++) +  ')">&nbsp;&nbsp;' + g[i][ma[r][1]] + '</td>';
         }
         msg += '</tr>';
     }
@@ -861,18 +853,21 @@ function match()
     }
     if (hasd)
         msg += '<li>What do you want to do with the <span style=background-color:orange;color:black>' + dcount + ' duplicates</span>?<br><input name=dup value=l  type=radio  onclick=dup(0)>Take the lowest<input name=dup value=h type=radio onclick=dup(2)>Take the highest<input name=dup value=a  type=radio  onclick=dup(1)>Take the average  <input name=dup value=h type=radio onclick=dup(3) checked > Take the first  <input name=dup value=h type=radio onclick=dup(4)> Take the last<br>';
-    msg += '<br><li>Next, you need to decide which column on the right is going to merge to which column on the left. Please note that the red boxes on heading area are editable: typing or keeping as is, selecting, or clearing, correspoding to merging as a new column in the gradebook, overriding an existing column, or discarding that data column, respectively. The Null Heading button clears all headings'; 
+    msg += '<br><li>Next, you need to decide which column on the right is going to merge to which column on the left. Make selection in the red heading boxes'; 
     
     if (msg!='')
     {
         msg += "<br><br><li>The curved box allows you to enter a fomula to convert raw score x to blackboard score as full-point scale you declared on Blackboard may be different from that in the other systems. Using + for plus, - for minus as usual, but * from multiplication, and / for division, e.g, x/10 means the raw score will be converted to one tenth of the score to Blackboard"
-        let dv = document.createElement('div');
+       /* let dv = document.createElement('div');
         dv.style.cssText = 'padding:4px;position: absolute;top:200px;left: 50%;-webkit-transform: translate(-50%, 0);transform: translate(-50%, 0);z-index:20;background-color:#f0f0f0;border:1px gray outset;border-radius:4px';
-        dv.innerHTML = '<center><a href=javascript:closethis()>[close]</a><br><br>Match strength:<select name=sel onchange=redomatch(this)><option value=1 " + (matchstrength==1?"selected":"") + ">At least one name part</option><option value=2 " + (matchstrength==2?"selected":"") + ">At least two name parts</option><option value=3 " + (matchstrength==3?"selected":"") + ">require email matching</option></select></center><ul>' +msg   + "</ul><center><a href=javascript:closethis()>[close]</a></center>";
+        dv.innerHTML = '<center><a href=javascript:closethis()>[close]</a><br></center><ul>' +msg   + "</ul><center><a href=javascript:closethis()>[close]</a></center>";
         dv.id = 'pop';
-        document.body.appendChild(dv);
+        document.body.appendChild(dv);*/
+        myprompt(msg, null,null, 'Mismatches and Duplicates');
+        promptwin.style.top = '100px';
+        promptwin.style.left = '100px';
     }
-     
+    backupg = g; 
     g = newg;
     
     let s =   '<table border=1 id=tbl2 bgcolor=#f9f9f9 style=border-collapse:collpase cellpadding=4><tr height=28 bgcolor=lightgray>';
@@ -880,13 +875,10 @@ function match()
     {
         g[0] = new Array(maxm);
     }
-    for (let j=0; j < gi; j++)
-    {
-        s += '<td align=left height=28><nobr>' + (g[0][j]==null?"":g[0][j]) + '</nobr></td>';
-    }
+  
     let keys = Object.keys(mapcol); let tt= [];
     for (let ke of keys) tt.push(parseInt(ke));
-    for (let j=gi; j < maxm; j++)
+    for (let j=0; j < maxm; j++)
     {
         let lb = 'Choose...'; 
         let incol = false; 
@@ -898,7 +890,12 @@ function match()
             tt.push(parseInt(k));
         }
         let cl = 'red'; let kk = -1; 
-        if (incol) { cl = 'black';  lb = g[0][j]; }
+        if (incol) 
+        {
+            cl = 'black';  
+            lb = g[0][j]; 
+            if (lb == null) lb = 'NoLabel' + (j+1);
+        }
         else
         {
             for (let r = ma.length-1; r >=0; r--)
@@ -938,8 +935,7 @@ function match()
             bgcolor = 'orange';
             let kk = parseInt(g[i][maxcolg].substring(9));
             mark = b[kk][0];
-            for (let k1 = 1; k1 < bi; k1++)
-                mark += " " + b[kk][k1];
+             
         } 
         else if (g[i].length>=maxcolg && g[i][maxcolg].indexOf('miss') == 0)
         {   
@@ -965,7 +961,7 @@ function match()
             s += '<td ';
             if (j ==0 && mark!=null)
                 s += ' onmouseover="showdup(\'' + mark + '\','+ i +')" onmouseexit=cleardup('+ i +') ';
-            s +=   (j==0 && i>=b.length ?'onclick=moveto('+i+',this.parentNode)':'') + ' align=' + (true?'left':'right   width=78  ') + '><div style="' + (j<bi?"":"width:78px;overflow:hidden") + '"><nobr>' + (g[i][j]==null?"":g[i][j]) + '</nobr></div></td>';
+            s +=   (j==0 && i>=b.length ?'onclick=moveto('+i+',this.parentNode)':'') + ' align=' + (true?'left':'right   width=78  ') + '><div style="' + ( "width:78px;overflow:hidden") + '"><nobr>' + (g[i][j]==null?"":g[i][j]) + '</nobr></div></td>';
         }
         s += '</tr>';
     }
@@ -1041,10 +1037,10 @@ function makelist(j,k)
 let merged = null;
 function merge()
 {
-    let bi = bl[0], gi = bl[2];
+    
     let fail = false;
     let allf = ',';
-    for (let j=gi; j < maxcolg; j++)
+    for (let j=0; j < maxcolg; j++)
     {
         let field = $('field' + j);
         if (field==null) 
@@ -1067,7 +1063,20 @@ function merge()
     if ( fail) return;
     merged = new Array();
     let ms = new Array();
-    for (let i=0; i < b.length; i++)
+    merged[0] = new Array(b[0].length);
+    for (let l=0; l < merged[0].length; l++)
+       merged[0][l] = b[0][l];
+    for (let l=merged[0].length-1; l >=0; l--)
+       if (merged[0][l] == '' || merged[0][l] == 'NoLabel' + (l+1)) 
+       {    
+           merged[0].splice(l,1);break;
+       }
+    for (let l=merged[0].length-1; l >=0; l--)
+       if ( merged[0][l] == 'NoLabel' + (l+1)) 
+       {    
+           merged[0][l] = '';
+       }
+    for (let i=1; i < b.length; i++)
     {
             merged[i] = new Array(b[i].length)
             for (let l=0; l < merged[i].length; l++)
@@ -1079,7 +1088,7 @@ function merge()
     let digits = 0; try{digits = parseInt(curves[1]);}catch(e){}
     let mapb2g = [];
     let copyed = [];
-    for (let j=gi; j < maxcolg; j++)
+    for (let j=0; j < maxcolg; j++)
     {
         
         let field = $('field' + j);
@@ -1088,7 +1097,7 @@ function merge()
         let x = field.options[field.selectedIndex].value.replace(/^[ ]+/,'').replace(/[ ]+$/,'');
             if (x == '') 
               continue;
-        let m = bi;
+        let m = 0;
         if (x === 'Append Tail')
         {
            merged[0].push(headg[j]); 
@@ -1175,7 +1184,7 @@ function merge()
         s += '<tr bgcolor=' + (i==0?'lightgray':'white') + '>';
         for (let j=0; j < merged[i].length; j++)
         {
-            s += '<td ' + ((copyed[i] && ms.indexOf(j)>=0&&i>0 || i >= b.length)?' bgcolor=#f0f090 ':'') + ' align=' + (j<bi?'left':'right  width=85 ') + '><div style="' + (j<gi?"":"width:80px;overflow:hidden") + '"><nobr>' + merged[i][j] + '</nobr></div></td>';
+            s += '<td ' + ((copyed[i] && ms.indexOf(j)>=0&&i>0 || i >= b.length)?' bgcolor=#f0f090 ':'') + ' align=' + ( 'right  width=85 ') + '><div style="' + ( "width:80px;overflow:hidden") + '"><nobr>' + merged[i][j] + '</nobr></div></td>';
         }
         s += '</tr>';
     }
@@ -1197,13 +1206,13 @@ function nullall()
 function csv()
 {
     let s = '';
-    for (let i=0; i < b.length; i++)
+    for (let i=0; i < merged.length; i++)
     {
         if (i>0) s += '\n';
         for (let j=0; j < merged[i].length; j++)
         {    
             if (j>0) s += ',';
-            s += '"' + merged[i][j].replace(/"/g,"") + '"';
+            s += '"' + merged[i][j].replace(/"/g,'""') + '"';
              
         }
     }
