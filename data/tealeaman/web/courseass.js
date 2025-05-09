@@ -1,6 +1,0 @@
-
-function openit2new()
-{
-    
-}
-
