@@ -632,6 +632,65 @@ function selma()
     }
     colorcol();
 }
+let bsi = [], gsi = [],scol;
+function sortnow()
+{
+    let r = 0;
+    let tb;
+    bsi = [], gsi = [];
+    while ( (tb = document.getElementById('choice' + r))!==null)
+    {
+        if (tb.checked)
+        {
+           bsi.push(parseInt(tb.parentNode.nextSibling.innerHTML.replace(/:.*$/,'').replace(/[^0-9]/g,'')) - 1);
+           gsi.push(parseInt(tb.parentNode.nextSibling.nextSibling.innerHTML.replace(/:.*$/,'').replace(/[^0-9]/g,'')) - 1);
+        }
+        r++;
+    }
+    function comp(x,y)
+    {
+        for (let c=0; c < scol.length; c++)
+        {
+            let xv = x.cells[scol[c]].textContent.trim().toLowerCase();
+            let yv = y.cells[scol[c]].textContent.trim().toLowerCase();
+            if (xv!==yv)
+            {
+                if (isNaN(xv) || isNaN(yv))
+                {
+                    return xv > yv?1:-1;
+                }
+                else
+                {
+                    return parseFloat(xv) - parseFloat(yv);
+                }
+            }
+        }
+        return 1;
+    }
+    let tbl = document.getElementById('tbl0');
+    let rw= [];
+    for (let i=1; i < tbl.rows.length;i++ )
+        rw.push(tbl.rows[i]);
+    scol = bsi;
+    rw.sort(comp);
+    let N = rw.length;
+    for (;N>0; N--)
+        tbl.deleteRow(N);
+    for (let i=0; i < rw.length; i++)
+        tbl.appendChild(rw[i]);
+    tbl = document.getElementById('tbl2');
+    rw= [];
+    for (let i=1; i < tbl.rows.length;i++ )
+        rw.push(tbl.rows[i]);
+    scol = gsi;
+    rw.sort(comp);
+    N = rw.length;
+    for (;N>0; N--)
+        tbl.deleteRow(N);
+    for (let i=0; i < rw.length; i++)
+        tbl.appendChild(rw[i]);
+    closeprompt();
+}
 function matchcol()
 {
     if (backupg!=null) maketbl(2,g);
@@ -641,7 +700,7 @@ function matchcol()
     for (let r = 0; r < M.length && r < 7; r++){ nn++;
         s.push("<tr><td align=center><input id=choice" + r + " type=checkbox onclick=selma()></td><td style=white-space:nowrap >" + (M[r][0]+1) + ": " + b[0][M[r][0]] + "</td><td style=white-space:nowrap >" + (M[r][1]+1) + ": " + g[0][M[r][1]] + "</td><td>" + (100 * M[r][2]).toFixed(0) + "%</td></tr>");
     }
-    s.push("</table>");
+    s.push("</table><center><br><input class=GreenButton type=button value=OK style=width:78px;background-color:purple onclick=sortnow()></center>");
     
     myprompt(s.join(''), null, null, 'Column Matching Strength');
     promptwin.style.top = '300px';
