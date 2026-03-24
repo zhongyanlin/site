@@ -321,10 +321,10 @@ function maketbl(cl, m)
         {
              m[i][j] = '';
         }
-        s += '<tr height=28 bgcolor=' + (i==0?'lightgray':'white') + '>';
+        s += '<tr height=30 bgcolor=' + (i==0?'lightgray':'white') + '>';
         for (let j=0; j < mc; j++)
         {
-            s += '<td align=' + ( 'right width=85 ') + '><div style="' + ( "width:80px;overflow:hidden") + '" ' + (cl>0||i>0?'':' onmouseover=showfull(this) onmouseexit=showless(this) ') + '><nobr>' +  m[i][j] + '</nobr></div></td>';
+            s += '<td align=' + ( 'center width=95 ') + '><div style="' + ( "width:88px;overflow:hidden") + '" ' + (cl>0||i>0?'':' onmouseover=showfull(this) onmouseexit=showless(this) ') + '><nobr>' +  m[i][j] + '</nobr></div></td>';
         }
         s += '</tr>';
     }
@@ -700,7 +700,7 @@ function matchcol()
     for (let r = 0; r < M.length && r < 7; r++){ nn++;
         s.push("<tr><td align=center><input id=choice" + r + " type=checkbox onclick=selma()></td><td style=white-space:nowrap >" + (M[r][0]+1) + ": " + b[0][M[r][0]] + "</td><td style=white-space:nowrap >" + (M[r][1]+1) + ": " + g[0][M[r][1]] + "</td><td>" + (100 * M[r][2]).toFixed(0) + "%</td></tr>");
     }
-    s.push("</table><center><br><input class=GreenButton type=button value=OK style=width:78px;background-color:purple onclick=sortnow()></center>");
+    s.push("</table><center><br><input class=GreenButton type=button value=OK style=width:88px;background-color:purple onclick=sortnow()></center>");
     
     myprompt(s.join(''), null, null, 'Column Matching Strength');
     promptwin.style.top = '300px';
@@ -733,6 +733,7 @@ function matchcol()
     }
     matchbtn.style.display = 'inline';
 }
+ 
 
 function match()
 {
@@ -795,7 +796,7 @@ function match()
              }
              arr.push(count*1000 + m);
          }
-         arr.sort((a,b)=>(b-a));
+         arr.sort((x,y)=>(y-x));
          let maxscore = arr[0];
           
          let ss = '';
@@ -845,7 +846,7 @@ function match()
             //newg[m] = new Array(g[0].length);
             missleft = true;
             if (m>0){
-            msg +='<tr height=28>';
+            msg +='<tr height=30>';
             let done = [];
             for (let j1 of kes)
             {
@@ -875,7 +876,7 @@ function match()
     {
         let i = mism[j];
         newg[newg.length] = copyc(i, 'missed');
-        msg +='<tr height=28>';let done = [];
+        msg +='<tr height=30>';let done = [];
         for (let j1 of kes)
         {
              let l = mapcol[j1];done.push(l);
@@ -929,7 +930,7 @@ function match()
     backupg = g; 
     g = newg;
     
-    let s =   '<table border=1 id=tbl2 bgcolor=#f9f9f9 style=border-collapse:collpase cellpadding=4><tr height=28 bgcolor=lightgray>';
+    let s =   '<table border=1 id=tbl2 bgcolor=#f9f9f9 style=border-collapse:collpase cellpadding=4><tr height=30 bgcolor=lightgray>';
     if (g[0] == null)
     {
         g[0] = new Array(maxm);
@@ -1001,14 +1002,14 @@ function match()
             bgcolor = 'red'; 
             
         }
-        s += '<tr height=28 bgcolor=' +  bgcolor + '>';
+        s += '<tr height=30 bgcolor=' +  bgcolor + '>';
         if (g[i] == null)
         {  
              g[i] = new Array(maxcolg);
              for (let j=0; j < maxcolg; j++)
             {
                g[i][j] = '';
-               s += '<td ' + (j==0?'onclick=accept(' + i + ',this.parentNode)':'') + ' align=' + (true?'left':'right   width=78  ') + '>&nbsp;&nbsp;</td>';
+               s += '<td ' + (j==0?'onclick=accept(' + i + ',this.parentNode)':'') + ' align=' + (true?'left':'center   width=95  ') + '>&nbsp;&nbsp;</td>';
             }
             //s += '<td colspan=' + maxm +'>&nbsp&nbsp;</td>';
         }
@@ -1020,7 +1021,7 @@ function match()
             s += '<td ';
             if (j ==0 && mark!=null)
                 s += ' onmouseover="showdup(\'' + mark + '\','+ i +')" onmouseexit=cleardup('+ i +') ';
-            s +=   (j==0 && i>=b.length ?'onclick=moveto('+i+',this.parentNode)':'') + ' align=' + (true?'left':'right   width=78  ') + '><div style="' + ( "width:78px;overflow:hidden") + '"><nobr>' + (g[i][j]==null?"":g[i][j]) + '</nobr></div></td>';
+            s +=   (j==0 && i>=b.length ?'onclick=moveto('+i+',this.parentNode)':'') + ' align=' + (true?'left':'center   width=95  ') + '><div style="' + ( "width:95px;overflow:hidden") + '"><nobr>' + (g[i][j]==null?"":g[i][j]) + '</nobr></div></td>';
         }
         s += '</tr>';
     }
@@ -1039,14 +1040,14 @@ function showdup(mark, i)
     for(var k=N; k <= i; k++)
     {
         tbl0.insertRow(-1);
-        tbl0.rows[k].outerHTML = '<tr height=28><td colspan=' + b[0].length + ' align=right>&nbsp;</td></tr>';
+        tbl0.rows[k].outerHTML = '<tr height=30 ><td colspan=' + b[0].length + ' align=right>&nbsp;</td></tr>';
        /* tbl0.rows[k].cells[0].colSpan = b[0].length;
         tbl0.rows[k].cells[0].align = 'right';
         tbl0.rows[k].cells[0].innerHTML = '&nbsp;'
         tbl0.rows[k].height = '28';*/
     }
     for(var k=N; k <= i; k++)
-        tbl0.rows[k].height = '28';
+        tbl0.rows[k].height = '30';
     tbl0.rows[i].cells[0].innerHTML = mark;
    
 }
@@ -1084,7 +1085,7 @@ function accept(i,tr)
 }
 function makelist(j,k)
 {
-    let s = "<select style=\"margin:0px 0px 0px 0px;color:red;width:80px;overflow:hidden;border:1px red solid\" id=\"field" + j + "\"><option  style=color:red value=\"\"></option>";
+    let s = "<select style=\"margin:0px 0px 0px 0px;color:red;width:88px;overflow:hidden;border:1px red solid\" id=\"field" + j + "\"><option  style=color:red value=\"\"></option>";
     for (let l=0;l < headb.length; l++)
     {
         s += "<option  style=color:red value=\"" + headb[l] + "\" " + (l===k?'selected':'') +  ">" + (headb[l].length<15?headb[l]:headb[l].substring(0,15)) + "</option>\n";
@@ -1240,10 +1241,10 @@ function merge()
     }
     for (let i=0; i < merged.length; i++)
     {
-        s += '<tr bgcolor=' + (i==0?'lightgray':'white') + '>';
+        s += '<tr bgcolor=' + (i==0?'lightgray':'white') + ' height=30 >';
         for (let j=0; j < merged[i].length; j++)
         {
-            s += '<td ' + ((copyed[i] && ms.indexOf(j)>=0&&i>0 || i >= b.length)?' bgcolor=#f0f090 ':'') + ' align=' + ( 'right  width=85 ') + '><div style="' + ( "width:80px;overflow:hidden") + '"><nobr>' + merged[i][j] + '</nobr></div></td>';
+            s += '<td ' + ((copyed[i] && ms.indexOf(j)>=0&&i>0 || i >= b.length)?' bgcolor=#f0f090 ':'') + ' align=' + ( 'center  width=95 ') + '><div style="' + ( "width:95px;overflow:hidden") + '"><nobr>' + merged[i][j] + '</nobr></div></td>';
         }
         s += '</tr>';
     }
