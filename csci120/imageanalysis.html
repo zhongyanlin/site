@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Column Analysis</title>
+    <script src="https://docs.opencv.org/4.5.5/opencv.js" onload="onOpenCvReady();" async></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .chart-container {
+            width: 80%;
+            margin: 20px 0;
+        }
+        canvas {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Column Analysis</h1>
+        
+        <div>
+            <input type="file" id="fileInput" accept="image/*">
+            <button id="analyzeBtn" disabled>Analyze Image</button>
+        </div>
+        
+        <div id="imageContainer"></div>
+        
+        <div class="chart-container">
+            <h2>U(c) - Column Sum</h2>
+            <canvas id="uChart"></canvas>
+        </div>
+        
+        <div class="chart-container">
+            <h2>V(c) - Column Difference Sum</h2>
+            <canvas id="vChart"></canvas>
+        </div>
+    </div>
+<textarea rows=8 cols=40 id=nm></textarea>
+    <script>
+        let cvReady = false;
+        let imgElement = null;
+        let imgMat = null;
+        
+        function onOpenCvReady() {
+            cvReady = true;
+            document.getElementById('analyzeBtn').disabled = false;
+        }
+        
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            if (!e.target.files.length) return;
+            
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                if (imgElement) {
+                    imgElement.remove();
+                }
+                
+                imgElement = document.createElement('img');
+                imgElement.src = e.target.result;
+                imgElement.style.maxWidth = '780px';
+                document.getElementById('imageContainer').appendChild(imgElement);
+            };
+            
+            reader.readAsDataURL(file);
+        });
+        
+        document.getElementById('analyzeBtn').addEventListener('click', function() {
+            if (!cvReady || !imgElement) {
+                alert('Please wait for OpenCV to load and select an image first');
+                return;
+            }
+            
+            // Convert image to grayscale matrix
+            const src = cv.imread(imgElement);
+            const dst = new cv.Mat();
+            cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+            imgMat = dst;
+            src.delete();
+            
+            // Compute U(c) and V(c)
+            const { uValues, vValues } = computeColumnStats(imgMat,imgElement);
+            
+            // Plot the results
+            plotChart('uChart', 'U(c) - Column Sum', uValues);
+            plotChart('vChart', 'V(c) - Column Difference Sum', vValues);
+        });
+/**
+ * Convert grayscale image to black-white using mode-based thresholding
+ * @param {cv.Mat} greyscaled - Input grayscale image (from cv.imread)
+ */
+ 
+function containSlopeLine(src,area) {
+    // Load the image and convert to grayscale
+   // let src = cv.imread(imgElement);
+    let gray = new cv.Mat();
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    
+    // Extract the ROI (Region of Interest)
+    let [xmin, ymin, xmax, ymax] = area;
+    let roi = gray.roi(new cv.Rect(xmin, ymin, xmax - xmin, ymax - ymin));
+    
+    // 1. Image enhancement for unclear images
+    let enhanced = new cv.Mat();
+    cv.equalizeHist(roi, enhanced);
+    
+    // 2. Adaptive thresholding instead of global threshold
+    let thresholded = new cv.Mat();
+    cv.adaptiveThreshold(enhanced, thresholded, 255, 
+                        cv.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                        cv.THRESH_BINARY, 11, 2);
+    
+    // 3. Morphological operations to enhance lines
+    let kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
+    let morphed = new cv.Mat();
+    cv.morphologyEx(thresholded, morphed, cv.MORPH_CLOSE, kernel);
+    
+    // 4. Edge detection with optimized parameters
+    let edges = new cv.Mat();
+    cv.Canny(morphed, edges, 30, 90); // Lower thresholds for more sensitivity
+    
+    // 5. Line detection with sensitive Hough Transform parameters
+    let lines = new cv.Mat();
+    cv.HoughLinesP(edges, lines, 
+                  1,              // rho resolution (pixels)
+                  Math.PI/180,    // theta resolution (radians)
+                  20,             // threshold (lower = more sensitive)
+                  10,             // min line length (pixels)
+                  5);             // max line gap (pixels)
+    
+    // Check each line's slope
+    for (let i = 0; i < lines.rows; ++i) {
+        let line = lines.data32S.subarray(i*4, (i+1)*4);
+        let x1 = line[0], y1 = line[1], x2 = line[2], y2 = line[3];
+        
+        // Skip very short lines (noise)
+        let length = Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2));
+        if (length < 15) continue;
+        
+        // Avoid division by zero for vertical lines
+        if (x1 === x2) continue;
+        
+        let slope = (y2 - y1) / (x2 - x1);
+        let absSlope = Math.abs(slope);
+        
+        if (absSlope >= 0.15 && absSlope <= 0.75) {
+            // Clean up and return true if slope is in target range
+            src.delete(); gray.delete(); roi.delete(); 
+            enhanced.delete(); thresholded.delete(); 
+            morphed.delete(); edges.delete(); lines.delete();
+            kernel.delete();
+            return true;
+        }
+    }
+    
+    // Clean up and return false if no qualifying lines found
+   // src.delete(); 
+    gray.delete(); roi.delete(); 
+    enhanced.delete(); thresholded.delete(); 
+    morphed.delete(); edges.delete(); lines.delete();
+    kernel.delete();
+    return false;
+    // gray.delete(); roi.delete(); edges.delete(); lines.delete();
+    //return false; 
+}
+async function findLargestBlankRectangle(rct, imgElement, ps,  xmin,ymin, darknessThreshold = 30) 
+{
+    // Load OpenCV.js if not already loaded
+    if (typeof cv === 'undefined') 
+    {
+        await loadOpenCV();
+    }
+
+    // Convert the image to grayscale
+    const src = cv.imread(imgElement);
+    let gray = new cv.Mat();
+     
+    src.channels() === 3 ? cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY) : gray = src.clone();
+    //let rct = [];
+    for (let p of ps)
+    {
+        let x = p[0], y = p[1];
+         
+        
+    
+    const refValue = gray.ucharPtr(y, x)[0];
+    const threshold = refValue * 0.85; // 30% darker threshold
+    
+    let spiralResult = findLargestBlankSquareWithStopSide(x, y, gray, threshold);
+    let bounds = spiralResult.bounds;
+    let stopSide = spiralResult.stopSide;
+    
+    // 2. Extend opposite side first
+    bounds = extendOppositeSide(bounds, stopSide, gray, threshold);
+    
+    // 3. Then extend the remaining two sides
+    bounds = extendPerpendicularSides(bounds, stopSide, gray, threshold);
+    if (bounds.minX < x - xmin/2)bounds.minX = x - xmin/2;
+    if (bounds.maxX > x + xmin/2)bounds.maxX = x + xmin/2; 
+     if (bounds.minY < y - ymin/2)bounds.minY = y - ymin/2;
+    if (bounds.maxY > y + ymin/2)bounds.maxY = y + ymin/2; 
+    rct.push( [bounds.minX, bounds.minY, bounds.maxX, bounds.maxY, x, y, p[2], p[3]]);
+    }
+    gray.delete();
+    src.delete();
+}
+function findLargestBlankSquareWithStopSide(x, y, gray, threshold) {
+    let cx = x, cy = y;
+    let bounds = {
+        minX: x, maxX: x,
+        minY: y, maxY: y
+    };
+    let stopSide = null; // Will be 'north', 'east', 'south', or 'west'
+    
+    let step = 1;
+    let directions = [
+        {dx: 0, dy: -1, name: 'north'},
+        {dx: 1, dy: 0, name: 'east'},
+        {dx: 0, dy: 1, name: 'south'},
+        {dx: -1, dy: 0, name: 'west'}
+    ];
+    let dirIndex = 0;
+    let stepsInDirection = 0;
+    let stepsToTake = 1;
+    
+    while (true) {
+        // Take a step
+        cx += directions[dirIndex].dx;
+        cy += directions[dirIndex].dy;
+        stepsInDirection++;
+        
+        // Check bounds or color
+        if (cx < 0 || cx >= gray.cols || cy < 0 || cy >= gray.rows || 
+            gray.ucharPtr(cy, cx)[0] < threshold) {
+            stopSide = directions[dirIndex].name;
+            break;
+        }
+        
+        // Update bounds
+        bounds.minX = Math.min(bounds.minX, cx);
+        bounds.maxX = Math.max(bounds.maxX, cx);
+        bounds.minY = Math.min(bounds.minY, cy);
+        bounds.maxY = Math.max(bounds.maxY, cy);
+        
+        // Change direction if needed
+        if (stepsInDirection >= stepsToTake) {
+            stepsInDirection = 0;
+            dirIndex = (dirIndex + 1) % 4;
+            if (dirIndex % 2 === 0) stepsToTake++;
+        }
+    }
+    bounds.minX +=1;
+     //   bounds.maxX -=1;
+        bounds.minY +=1;
+     //   bounds.maxY -=1;
+    return { bounds, stopSide };
+}
+
+function extendOppositeSide(bounds, stopSide, gray, threshold) {
+    let newBounds = {...bounds};
+    //threshold *= 1.2;
+    switch (stopSide) {
+        case 'north':
+            // Try extending south
+            while (newBounds.maxY < gray.rows - 1) {
+                if (!checkRow(gray, newBounds.maxY + 1, newBounds.minX, newBounds.maxX, threshold)) {
+                    break;
+                }
+                newBounds.maxY++;
+            }
+            break;
+            
+        case 'east':
+            // Try extending west
+            while (newBounds.minX > 0) {
+                if (!checkColumn(gray, newBounds.minX - 1, newBounds.minY, newBounds.maxY, threshold)) {
+                    break;
+                }
+                newBounds.minX--;
+            }
+            break;
+            
+        case 'south':
+            // Try extending north
+            while (newBounds.minY > 0) {
+                if (!checkRow(gray, newBounds.minY - 1, newBounds.minX, newBounds.maxX, threshold)) {
+                    break;
+                }
+                newBounds.minY--;
+            }
+            break;
+            
+        case 'west':
+            // Try extending east
+            while (newBounds.maxX < gray.cols - 1) {
+                if (!checkColumn(gray, newBounds.maxX + 1, newBounds.minY, newBounds.maxY, threshold)) {
+                    break;
+                }
+                newBounds.maxX++;
+            }
+            break;
+    }
+    
+    return newBounds;
+}
+
+function extendPerpendicularSides(bounds, stopSide, gray, threshold) {
+    let newBounds = {...bounds};
+    
+    // Determine which sides to extend based on stop side
+    if (stopSide === 'north' || stopSide === 'south') {
+        // Extend east and west
+        while (newBounds.minX > 0) {
+            if (!checkColumn(gray, newBounds.minX - 1, newBounds.minY, newBounds.maxY, threshold)) {
+                break;
+            }
+            newBounds.minX--;
+        }
+        while (newBounds.maxX < gray.cols - 1) {
+            if (!checkColumn(gray, newBounds.maxX + 1, newBounds.minY, newBounds.maxY, threshold)) {
+                break;
+            }
+            newBounds.maxX++;
+        }
+    } else {
+        // Extend north and south
+        while (newBounds.minY > 0) {
+            if (!checkRow(gray, newBounds.minY - 1, newBounds.minX, newBounds.maxX, threshold)) {
+                break;
+            }
+            newBounds.minY--;
+        }
+        while (newBounds.maxY < gray.rows - 1) {
+            if (!checkRow(gray, newBounds.maxY + 1, newBounds.minX, newBounds.maxX, threshold)) {
+                break;
+            }
+            newBounds.maxY++;
+        }
+    }
+    
+    return newBounds;
+}
+
+// Helper functions
+function checkRow(mat, row, x1, x2, threshold) {
+    for (let x = x1; x <= x2; x++) {
+        if (mat.ucharPtr(row, x)[0] < threshold) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function checkColumn(mat, col, y1, y2, threshold) {
+    for (let y = y1; y <= y2; y++) {
+        if (mat.ucharPtr(y, col)[0] < threshold) {
+            return false;
+        }
+    }
+    return true;
+}
+        function drawLines(imgElement, p) {
+    // Create overlay div
+    const overlay = document.createElement('div');
+    overlay.style.position = 'absolute';
+    overlay.style.top = imgElement.offsetTop + 'px';
+    overlay.style.left = imgElement.offsetLeft + 'px';
+    overlay.style.width = imgElement.width + 'px';
+    overlay.style.height = imgElement.height + 'px';
+    overlay.style.pointerEvents = 'none'; // Allow clicks to pass through
+    overlay.style.overflow = 'hidden'; // Contain absolutely positioned lines
+    
+    // Get image position and dimensions
+    const imgRect = imgElement.getBoundingClientRect();
+    
+    // Create a line for each coordinate set
+    p.forEach(line => {
+        const [x1, y1, x2, y2] = line;
+        
+        // Calculate line length
+        const len = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        
+        // Calculate middle point
+        const midX = (x1 + x2) / 2;
+        const midY = (y1 + y2) / 2;
+        
+        // Calculate slope and angle (in degrees)
+        if (Math.abs(x2-x1) > 5){ 
+        const slope = (y2 - y1) / (x2 - x1);
+        const angle = Math.atan(slope) * (180 / Math.PI);
+        
+        // Create line element
+        const lineDiv = document.createElement('div');
+        lineDiv.style.position = 'absolute';
+        lineDiv.style.backgroundColor = 'red';
+        lineDiv.style.height = '1px';
+        lineDiv.style.width = len + 'px';
+        lineDiv.style.transformOrigin = '0 0';
+        lineDiv.style.transform = `rotate(${angle}deg)`;
+        
+        // Position the line (centered at midpoint)
+        lineDiv.style.left = (midX - len/2) + 'px';
+        lineDiv.style.top = midY + 'px';
+        
+        overlay.appendChild(lineDiv);
+        }
+        else
+        {
+        const slope =  (x2 - x1)/(y2 - y1);
+        const angle = Math.atan(slope) * (180 / Math.PI);
+        
+        // Create line element
+        const lineDiv = document.createElement('div');
+        lineDiv.style.position = 'absolute';
+        lineDiv.style.backgroundColor = 'red';
+        lineDiv.style.width = '1px';
+        lineDiv.style.height = len + 'px';
+        lineDiv.style.transformOrigin = '0 0';
+        lineDiv.style.transform = `rotate(${angle}deg)`;
+        
+        // Position the line (centered at midpoint)
+        lineDiv.style.left =  midX  + 'px';
+        lineDiv.style.top = (midY - len/2)+ 'px';
+        
+        overlay.appendChild(lineDiv);
+        }
+    });
+    
+    // Insert overlay after the image in DOM
+    imgElement.parentNode.insertBefore(overlay, imgElement.nextSibling);
+    
+    return overlay;
+}
+        function computeColumnStats(mat,imgElement) {
+            const height = mat.rows;
+            const width = mat.cols;
+            const uValues = new Array(width).fill(0);
+            const vValues = new Array(width).fill(0);
+            
+            // Compute U(c) = sum of all pixels in column c
+            let mx = 0;
+            for (let c = 0; c < width; c++) {
+                let sum = 0;
+                for (let r = 0; r < height; r++) {
+                    sum += mat.ucharPtr(r, c)[0];
+                }
+                uValues[c] = sum;
+                if (sum > mx) mx = sum;
+            }
+            for (let c = 0; c < height; c++) {
+                let sum = 0;
+                for (let r = 0; r < width; r++) {
+                    sum += mat.ucharPtr(c, r)[0];
+                }
+                vValues[c] = sum;
+                if (sum > mx) mx = sum;
+            }
+            let h = [];
+            let xs = multipleminimum(uValues, 9, width/20);
+            let sm = 0, N0=0;
+            for (let x =1; x < xs.length-2; x++)
+            {
+                sm += xs[x+1] - xs[x];N0++;
+            }
+            let xmin = sm/N0;
+            
+            for (let x in xs)
+            {
+                
+                h.push([xs[x], 0, xs[x], height]);
+                
+            }
+            let ys = multipleminimum(vValues, 30, height/35);
+            sm = 0, N0=0;
+            for (let y =3; y < ys.length-2; y++)
+            {
+                sm += ys[y+1] - ys[y];N0++;
+            }
+            let ymin = sm/N0; 
+            for (let y in ys)
+            {
+                h.push([0, ys[y], width, ys[y]]);
+                
+            }
+            
+            let typical = 0;N0 = 0;
+            for (let c = ys[~~(ys.length/2)]; c < ys[~~(ys.length/2)+1]; c++) 
+            {
+                for (let r = 0; r < width; r++) {
+                    typical += mat.ucharPtr(c, r)[0];
+                    N0++;
+                }
+            }
+            typical /= N0;
+            
+            let nn = 2;
+            while (nn>=0)
+            {
+                sum = 0;N0 = 0;
+                for (let c = ys[nn]; c < ys[nn+1]; c++) 
+                {
+                    for (let r = 0; r < width; r++) 
+                    {
+                        sum += mat.ucharPtr(c, r)[0];
+                        N0++;
+                    }
+                }
+                sum /= N0;
+                if (sum < 0.9*typical)
+                {
+                   ys.splice(0,nn+1); 
+                   break;
+                }
+                nn--;
+            }
+          
+            let g = [];let rect = [];
+            for (let x =1; x <  xs.length-1; x+=2)
+            {
+                for (let y=0; y < ys.length-1; y++)
+                {
+                
+                   let xx =  ~~((xs[x]+xs[x+1])/2), yy = ~~((ys[y]+ys[y+1])/2); 
+                    g.push([xx,yy,y,~~((x-1)/2)]);
+                }
+            }
+            let src = cv.imread(imgElement);
+            let numbers = [];
+            try{
+                findLargestBlankRectangle(rect, imgElement, g, xmin, ymin, 30);
+                
+                h = [];
+                let areas = [];
+                for (let r of rect)
+                {
+                    if ( (r[2]-r[0])*(r[3]-r[1]) < 0.35*ymin * xmin) continue;
+                    
+                    if (containSlopeLine(src,[r[4] - xmin/2,r[5] - ymin/2, r[4] + xmin/2,r[5] + ymin/2])) continue;
+                   
+                    h.push([r[0],r[1],r[0],r[3]]);
+                    h.push([r[0],r[1],r[2],r[1]]);
+                    h.push([r[2],r[1],r[2],r[3]]);
+                    h.push([r[0],r[3],r[2],r[3]]);
+                    numbers.push(r[6] + r[7]*(ys.length-1));
+                }
+                for (let n of numbers) {console.log(n); document.getElementById('nm').value += n +", ";}
+                drawLines(imgElement, h);
+                //let names = extractWords(imgElement,areas);
+                for (let xx of names)
+                    console.log(xx);
+            } catch(e){}
+          
+            // Compute V(c) = sum of absolute differences between consecutive pixels in column c
+            for (let c = 0; c < width; c++) {
+                let sum = 0;
+                for (let r = 1; r < height; r++) {
+                    const diff = Math.abs(mat.ucharPtr(r, c)[0] - mat.ucharPtr(r-1, c)[0]);
+                    sum += diff;
+                }
+              //  vValues[c] = sum;
+            } 
+            src.delete();
+            return { uValues, vValues };
+        }
+        
+        function plotChart(canvasId, label, data) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            // Destroy previous chart if it exists
+            if (window[canvasId + 'Chart']) {
+                window[canvasId + 'Chart'].destroy();
+            }
+            
+            window[canvasId + 'Chart'] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: data.length}, (_, i) => i),
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Column (c)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Value'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        function multipleminimum(list, N, w) {
+    if (N <= 0 || list.length === 0) return [];
+    
+    const result = [];
+    // Create a copy of the original list with indices to keep track of original positions
+    const indexedList = list.map((value, index) => ({value, index}));
+    // Create a working copy we can modify
+    let workingList = [...indexedList];
+    
+    while (result.length < N && workingList.length > 0) {
+        // Find the minimum value in the current working list
+        let minIndex = 0;
+        for (let i = 1; i < workingList.length; i++) {
+            if (workingList[i].value < workingList[minIndex].value) {
+                minIndex = i;
+            }
+        }
+        
+        const selected = workingList[minIndex];
+        result.push(selected.index);
+        
+        // Filter out elements that are within w distance of the selected index
+        workingList = workingList.filter(item => 
+            Math.abs(item.index - selected.index) >= w
+        );
+    }
+    let r1 = result.slice(0, N);
+    r1.sort((a, b) => a - b);
+    return r1; // Ensure we return exactly N elements (or fewer if not possible)
+}
+
+function savefileas(txtbox,filename)
+{
+    if (filename == null || filename.indexOf(".")==0)
+    {
+        txtboxhold = txtbox;
+        var d  = new Date(); 
+        let ye = new Intl.DateTimeFormat('en', { year: 'numeric' }).format(d);
+        let mo = new Intl.DateTimeFormat('en', { month: '2-digit' }).format(d);
+        let da = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(d);
+        let hr = new Intl.DateTimeFormat('en', { hour: '2-digit' }).format(d);
+        let mn = new Intl.DateTimeFormat('en', { minute: '2-digit' }).format(d);
+        //let se = new Intl.DateTimeFormat('en', { second: '2-digit' }).format(d);
+        var fn =  ye + mo + da;
+        if (filename == null) fn += ".csv";
+        else fn += filename;
+        alert('Enter File name:',fn,"downloadas(txtboxhold,v)","File Name");
+        return;
+    }
+    let ext2mime = [];
+    ext2mime['aac'] = 'audio/aac';    
+    ext2mime['abw'] = 'application/x-abiword';    
+    ext2mime['arc'] = 'application/x-freearc';    
+    ext2mime['avi'] = 'video/x-msvideo';    
+    ext2mime['azw'] = 'application/vnd.amazon.ebook';    
+    ext2mime['bin'] = 'application/octet-stream';    
+    ext2mime['bmp'] = 'image/bmp';    
+    ext2mime['bz'] = 'application/x-bzip';    
+    ext2mime['bz2'] = 'application/x-bzip2';    
+    ext2mime['csh'] = 'application/x-csh';    
+    ext2mime['css'] = 'text/css';    
+    ext2mime['csv'] = 'text/csv';    
+    ext2mime['doc'] = 'application/msword';    
+    ext2mime['docx'] = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';    
+    ext2mime['eot'] = 'application/vnd.ms-fontobject';    
+    ext2mime['epub'] = 'application/epub+zip';    
+    ext2mime['gz'] = 'application/gzip';    
+    ext2mime['gif'] = 'image/gif';    
+    ext2mime['htm'] = 'text/html';    
+    ext2mime['html'] = 'text/html';    
+    ext2mime['ico'] = 'image/vnd.microsoft.icon';    
+    ext2mime['ics'] = 'text/calendar';    
+    ext2mime['jar'] = 'application/java-archive';    
+    ext2mime['jpg'] = 'image/jpeg';    
+    ext2mime['jpeg'] = 'image/jpeg';    
+    ext2mime['js'] = 'text/javascript';    
+    ext2mime['json'] = 'application/json';    
+    ext2mime['jsonld'] = 'application/ld+json';    
+    ext2mime['mid'] = 'audio/midi audio/x-midi';   
+    ext2mime['midi'] = 'audio/midi audio/x-midi';    
+    ext2mime['mjs'] = 'text/javascript';  
+    ext2mime['mp3'] = 'audio/mpeg';   
+    ext2mime['cda'] = 'application/x-cdf';   
+    ext2mime['mp4'] = 'video/mp4';  
+    ext2mime['mpeg'] = 'video/mpeg';  
+    ext2mime['mpkg'] = 'application/vnd.apple.installer+xml';   
+    ext2mime['odp'] = 'application/vnd.oasis.opendocument.presentation'; 
+    ext2mime['ods'] = 'application/vnd.oasis.opendocument.spreadsheet';   
+    ext2mime['odt'] = 'application/vnd.oasis.opendocument.text';    
+    ext2mime['oga'] = 'audio/ogg';    
+    ext2mime['ogv'] = 'video/ogg';    
+    ext2mime['ogx'] = 'application/ogg';   
+    ext2mime['opus'] = 'audio/opus';    
+    ext2mime['otf'] = 'font/otf';    
+    ext2mime['png'] = 'image/png';   
+    ext2mime['pdf'] = 'application/pdf';  
+    ext2mime['php'] = 'application/x-httpd-php'; 
+    ext2mime['ppt'] = 'application/vnd.ms-powerpoint';   
+    ext2mime['pptx'] = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';   
+    ext2mime['rar'] = 'application/vnd.rar';    
+    ext2mime['rtf'] = 'application/rtf';    
+    ext2mime['sh'] = 'application/x-sh';    
+    ext2mime['svg'] = 'image/svg+xml';    
+    ext2mime['swf'] = 'application/x-shockwave-flash';    
+    ext2mime['tar'] = 'application/x-tar';    
+    ext2mime['tif'] = 'image/tiff';   
+    ext2mime['tiff'] = 'image/tiff';   
+    ext2mime['ts'] = 'video/mp2t';    
+    ext2mime['ttf'] = 'font/ttf';    
+    ext2mime['txt'] = 'text/plain';   
+    ext2mime['vsd'] = 'application/vnd.visio';   
+    ext2mime['wav'] = 'audio/wav';    
+    ext2mime['weba'] = 'audio/webm';   
+    ext2mime['webm'] = 'video/webm';    
+    ext2mime['webp'] = 'image/webp';    
+    ext2mime['woff'] = 'font/woff';    
+    ext2mime['woff2'] = 'font/woff2';   
+    ext2mime['xhtml'] = 'application/xhtml+xml';   
+    ext2mime['xls'] = 'application/vnd.ms-excel';   
+    ext2mime['xlsx'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';    
+    ext2mime['xml'] = 'text/xml';   
+    ext2mime['xul'] = 'application/vnd.mozilla.xul+xml'; 
+    ext2mime['zip'] = 'application/zip';    
+    ext2mime['3gp'] = 'video/3gppaudio/3gpp';  
+    ext2mime['3g2'] = 'video/3gpp2audio/3gpp2';   
+    ext2mime['7z'] = 'application/x-7z-compressed';
+var mime_type = ext2mime[filename.replace("[^\\.]+\\.","")];
+var blob = new Blob([txtbox.value], {type: mime_type});
+    var dlink = document.createElement('a');
+    dlink.download = filename;
+    dlink.href = window.URL.createObjectURL(blob);
+    dlink.onclick = function(e) {
+        // revokeObjectURL needs a delay to work properly
+        var that = this;
+        setTimeout(function() {
+            window.URL.revokeObjectURL(that.href);
+        }, 1500);
+    };
+
+    dlink.click();
+    dlink.remove();
+} 
+    </script>
+</body>
+</html>
