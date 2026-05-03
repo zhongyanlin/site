@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Background Position</title>
+    <style>
+        /* Reset default styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Center the div on the page */
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Main animated div */
+        .animated-div {
+            width: 500px;
+            height: 553px;
+            background-image: url('https://yqx.grazy.cn/public/uploads/image/course/20201016/18e15b4e4aab78e53f19c3a83f73a8ec.jpg');
+            background-repeat: no-repeat;
+            background-size: 1920px 1080px; /* Explicitly set to match image dimensions */
+            background-position: 0px -406px; /* Initial position */
+            
+            /* Animation properties */
+            animation: panBackground 4s infinite alternate ease-in-out;
+            
+            /* Visual enhancements */
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        /* Hover effect for interactivity */
+        .animated-div:hover {
+            transform: scale(1.05);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Keyframes: animate background-position from 0 to -1420px */
+        @keyframes panBackground {
+            0% {
+                background-position: 0px -406px;
+            }
+            100% {
+                background-position: -1520px -406px;
+            }
+        }
+
+        /* Alternative version that goes both directions (0 to 1720px to -1720px) */
+        /* Uncomment the keyframes below and change animation name to 'panBackgroundFull' to try full range */
+        /*
+        @keyframes panBackgroundFull {
+            0% {
+                background-position: 0px -406px;
+            }
+            50% {
+                background-position: -1520px -406px;
+            }
+            100% {
+                background-position: 1720px -406px;
+            }
+        }
+        */
+
+        /* Optional info panel */
+        .info-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .info-panel span {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .info-panel {
+                font-size: 12px;
+                padding: 8px 16px;
+                bottom: 10px;
+            }
+        }
+
+        /* Respect user motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            .animated-div {
+                animation: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-div" aria-label="Animated background image scrolling horizontally"></div>
+    <div class="info-panel">
+        🎬 Background-position animation: <span>0 → -1720px</span> | 4s | infinite alternate | 1920×1080 image
+    </div>
+</body>
+</html>
