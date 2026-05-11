@@ -2,12 +2,15 @@ function $(x)
 {
    return document.getElementById(x);
 }
- 
-let b=0, g=0;
- 
+let b=null;
+let g=null;
 let maintbl = null;
 let source0 = new Array();
-let mergebtn, matchbtn, swapbtn, headingset, headingset1;
+let mergebtn;
+let matchbtn;
+let swapbtn;
+let headingset;
+let headingset1;
 let courselistobj = [];
 onload = function()
 {
@@ -184,7 +187,8 @@ function loadcoursesource(course)
             
     }
 }
-let maxcolg = 0, maxcolb = 0;
+let maxcolg = 0;
+let maxcolb = 0;
 function matchs(x, y) {
     let M = [];
     if (x.length < 2 || y.length < 2) return M;
@@ -225,27 +229,28 @@ function matchs(x, y) {
             if (Y_col.length > 5 && d < 0.5) {
             bag += j + ',';continue;}
             const a = countInclusions(X_col, Y_col) / X_col.length;
-            const b = countInclusions(Y_col, X_col) / Y_col.length;
-            const score = Math.max(a, b);
+            const c = countInclusions(Y_col, X_col) / Y_col.length;
+            const score = Math.max(a, c);
             M.push([i, j, score]);
         }
     }
 
-    M.sort(function(a, b){ 
-        if (b[2]!=a[2]) 
-            return b[2] - a[2]; 
-        if(a[0]+a[1]-b[0]-b[1]!=0) 
-            return a[0]+a[1]-b[0]-b[1]; 
-        if(a[0] != b[0]) 
-            return a[0]-b[0];
-        if(a[1] != b[1]) 
-            return a[1]-b[1];
+    M.sort(function(a,c){ 
+        if (c[2]!==a[2]) 
+            return c[2] - a[2]; 
+        if(a[0]+a[1]-c[0]-c[1]!=0) 
+            return a[0]+a[1]-c[0]-c[1]; 
+        if(a[0] !== c[0]) 
+            return a[0]-c[0];
+        if(a[1] !== c[1]) 
+            return a[1]-c[1];
         return 1;
     });
     return M;
 }
 let  ma;
-let headg,headb;
+let headg;
+let headb;
 function analyze()
 {
     if (g != null && g.length > 0 && b != null && b.length > 1) {
@@ -308,7 +313,8 @@ function maketbl(cl, m)
         {
             mc = m[i].length;
         }
-    if (cl == 0) maxcolb = mc;else maxcolg = mc;  
+    if (cl == 0) maxcolb = mc;
+    else maxcolg = mc;  
     for (let j=0; j < mc; j++)
     {
             if (m[0][j]==null || m[0][j].trim() === '') 
@@ -395,8 +401,10 @@ function parse(cl)
     else headb = b[0];
     colorcol();
 }
-let pairb = -1, pairg = -1;
-let clickedcellb = null, clickedcellg = null;
+let pairb = -1;
+let pairg = -1;
+let clickedcellb = null;
+let clickedcellg = null;
 function findPositionnoScrolling(oElement, win)
 {        
     if (win == null)
@@ -456,7 +464,8 @@ function copy(f, t)
     for (l=0; l < tbl.rows[f].cells.length; l++)
          tbl.rows[f].cells[l].innerHTML = '&nbsp;';    
 }
-let rowb, rowg;
+let rowb;
+let rowg;
 function pair(td,m,r0)
 {
    if (pairg >= 0)
@@ -503,14 +512,14 @@ function stat(arr,k)
        if (isNaN(arr[j])) return arr[0];
        brr.push(arr[j]);
     }
-    if (brr.length == 0) return 0;
-    brr.sort(function(a,b){
-        if (!isNaN(a) && !isNaN(b))
-            return parseFloat(a) - parseFloat(b);
+    if (brr.length === 0) return 0;
+    brr.sort(function(a,c){
+        if (!isNaN(a) && !isNaN(c))
+            return parseFloat(a) - parseFloat(c);
         return 1;
     });
-    if (k==0) return ''+ brr[0];
-    else if (k==2) 
+    if (k===0) return ''+ brr[0];
+    else if (k===2) 
         return  brr[brr.length-1];
     let s = 0;
     
@@ -632,7 +641,9 @@ function selma()
     }
     colorcol();
 }
-let bsi = [], gsi = [],scol;
+let bsi = [];
+let gsi = [];
+let scol;
 function sortnow()
 {
     let r = 0;
@@ -1300,7 +1311,7 @@ function delcols(row)
     let s = prompt("Enter the number of columns to delete", "");
     if (s == null) return;
     let ss = s.replace(/^[ ]+/,'').replace(/[ ]+$/,'').replace(/[ ][ ]+/,' ').split(/[ |,]/);
-    ss.sort(function(a,b){return parseInt(b)-parseInt(a);});
+    ss.sort(function(a,c){return parseInt(c)-parseInt(a);});
     let tbl = $('tbl' + (3*row));
     for (let k of ss)
     for (let j=0; j < b.length; j++)
@@ -1349,9 +1360,9 @@ let allregs = [];
 function replace()
 {
    let t = $('googlesource');
-   let b = $('view');
+   let bt = $('view');
    let undo = $('undo');
-   if (b.value == 'Back') view(b);
+   if (bt.value == 'Back') view(bt);
    let s =  $('sourcechar');
    let c =  $('targetchar');
    let a = $('regex');
