@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Tower of Hanoi - Realistic Trajectory Animation</title>
+    <style>
+        * {
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #2c5e4c 0%, #1a3a2e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: #fef3da;
+            border-radius: 64px;
+            box-shadow: 0 30px 45px rgba(0, 0, 0, 0.4);
+            padding: 1.5rem 2rem 2rem 2rem;
+            max-width: 1300px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0 0 0.2rem 0;
+            background: linear-gradient(135deg, #c06920, #9b4a12);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            background: #e9dbbd;
+            padding: 10px 24px;
+            border-radius: 60px;
+            margin: 20px 0 16px 0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 5px 12px rgba(0,0,0,0.1);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fff5e6;
+            padding: 5px 18px;
+            border-radius: 40px;
+        }
+
+        .control-group label {
+            font-weight: 700;
+            color: #4a2c16;
+        }
+
+        select {
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 32px;
+            background: #2c2c2c;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .toggle-switch {
+            display: inline-flex;
+            background: #c7b98b;
+            border-radius: 50px;
+            overflow: hidden;
+        }
+
+        .toggle-btn {
+            padding: 6px 22px;
+            font-weight: bold;
+            border: none;
+            background: #e7dbbc;
+            color: #3a2a1a;
+            cursor: pointer;
+            transition: 0.1s;
+            font-size: 0.9rem;
+        }
+
+        .toggle-btn.active {
+            background: #c57f2e;
+            color: white;
+        }
+
+        button {
+            background: #5f7b69;
+            border: none;
+            padding: 6px 26px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.1s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        .showme-btn {
+            background: #2b6e47;
+        }
+
+        .message-area {
+            text-align: center;
+            min-height: 56px;
+            margin: 5px 0 12px 0;
+            font-weight: bold;
+        }
+
+        .error-msg {
+            color: #c62828;
+            background: #ffe6e6;
+            display: inline-block;
+            padding: 6px 24px;
+            border-radius: 40px;
+        }
+
+        .platform {
+            position: relative;
+            background: #e9cf9b;
+            border-radius: 80px 80px 40px 40px;
+            padding: 30px 10px 35px 10px;
+            margin-top: 15px;
+            box-shadow: inset 0 5px 8px rgba(98, 58, 22, 0.2), 0 12px 20px rgba(0,0,0,0.2);
+        }
+
+        .pegs-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            gap: 20px;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .peg {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            background: rgba(110, 70, 30, 0.08);
+            border-radius: 60px;
+            min-height: 380px;
+            transition: all 0.1s;
+        }
+
+        .peg-rod {
+            width: 16px;
+            height: 240px;
+            background: linear-gradient(90deg, #8b5a2e, #c4945a, #8b5a2e);
+            border-radius: 20px;
+            margin-bottom: 0px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 5;
+            position: relative;
+        }
+
+        .peg-base-bar {
+            width: 130px;
+            height: 14px;
+            background: #b87a3c;
+            border-radius: 20px;
+            margin-top: -4px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            z-index: 6;
+            position: relative;
+        }
+
+        .peg-number {
+            margin-top: 12px;
+            font-weight: bold;
+            font-size: 1.4rem;
+            background: #ffe1a0;
+            width: 44px;
+            text-align: center;
+            border-radius: 40px;
+            color: #5a3a1a;
+            z-index: 6;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .disks-area {
+            position: absolute;
+            bottom: 48px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            justify-content: flex-start;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .disk {
+            position: relative;
+            height: 36px;
+            background: radial-gradient(ellipse at 30% 40%, #f7c578, #e09d42);
+            border-radius: 18px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,200,0.8);
+            cursor: grab;
+            margin-bottom: 4px;
+            border: 1px solid #c27d2e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #5c2d0a;
+            font-size: 14px;
+            pointer-events: auto;
+            z-index: 25;
+        }
+
+        .disk:active {
+            cursor: grabbing;
+        }
+
+        .disk.dragging {
+            position: fixed !important;
+            cursor: grabbing;
+            z-index: 9999 !important;
+            pointer-events: none;
+            opacity: 0.92;
+            transform: scale(1.02) rotate(2deg);
+            box-shadow: 0 20px 28px rgba(0,0,0,0.5);
+            margin: 0;
+            transition: none;
+        }
+
+        .peg.drag-over {
+            background: rgba(255, 215, 120, 0.5);
+            border-radius: 60px;
+            transition: 0.08s;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 0.8rem;
+            color: #8b6942;
+        }
+
+        /* Animation overlay for realistic trajectory */
+        .animated-disk {
+            position: fixed;
+            z-index: 10000;
+            pointer-events: none;
+            will-change: left, top, width;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.4));
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h1>🗼 Tower of Hanoi 🎯</h1>
+
+    <div class="toolbar">
+        <div class="control-group">
+            <label>📀 Disks:</label>
+            <select id="diskCountSelect">
+                <option value="1">1 disk</option>
+                <option value="2">2 disks</option>
+                <option value="3" selected>3 disks</option>
+                <option value="4">4 disks</option>
+                <option value="5">5 disks</option>
+                <option value="6">6 disks</option>
+                <option value="7">7 disks</option>
+                <option value="8">8 disks</option>
+                <option value="9">9 disks</option>
+                <option value="10">10 disks</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <span>🛡️ Mode</span>
+            <div class="toggle-switch" id="monitorToggle">
+                <button class="toggle-btn" data-mode="monitor">Monitor</button>
+                <button class="toggle-btn" data-mode="unmonitor">Unmonitor</button>
+            </div>
+        </div>
+        <button id="showMeBtn" class="showme-btn">✨ Show Me ✨</button>
+    </div>
+
+    <div class="message-area" id="messageArea"></div>
+
+    <div class="platform">
+        <div class="pegs-container" id="pegsContainer"></div>
+    </div>
+    <footer>💡 Drag a disk manually. In Show Me mode, watch realistic trajectory: ⬆️ up → ➡️ across → ⬇️ down</footer>
+</div>
+
+<script>
+    // ---------- Game State ----------
+    let disksCount = 3;
+    let rods = [[], [], []];
+    let monitorMode = true;
+    let autoPlaying = false;
+    let autoTimer = null;
+    let autoMovesQueue = [];
+
+    const diskSelect = document.getElementById('diskCountSelect');
+    const showMeBtn = document.getElementById('showMeBtn');
+    const messageDiv = document.getElementById('messageArea');
+    const pegsContainer = document.getElementById('pegsContainer');
+
+    let draggedDisk = null;
+    let dragSourcePeg = null;
+    let dragStartX = 0, dragStartY = 0;
+    let diskInitialOffsetX = 0, diskInitialOffsetY = 0;
+
+    function getDiskWidth(size) {
+        const minW = 52;
+        const maxW = 158;
+        const fraction = (size - 1) / (disksCount - 1 || 1);
+        return minW + fraction * (maxW - minW);
+    }
+
+    function renderDisks() {
+        for (let i = 0; i < 3; i++) {
+            const pegDiv = document.getElementById(`peg-${i}`);
+            if (!pegDiv) continue;
+            const disksContainer = pegDiv.querySelector('.disks-area');
+            if (!disksContainer) continue;
+            disksContainer.innerHTML = '';
+            const stack = rods[i];
+            for (let idx = 0; idx < stack.length; idx++) {
+                const diskSize = stack[idx];
+                const widthPx = getDiskWidth(diskSize);
+                const diskDiv = document.createElement('div');
+                diskDiv.className = 'disk';
+                diskDiv.setAttribute('data-size', diskSize);
+                diskDiv.setAttribute('data-peg', i);
+                diskDiv.style.width = `${widthPx}px`;
+                diskDiv.style.height = `36px`;
+                diskDiv.style.marginBottom = `4px`;
+                diskDiv.innerText = `${diskSize}`;
+                diskDiv.addEventListener('mousedown', onMouseDown);
+                disksContainer.appendChild(diskDiv);
+            }
+        }
+        document.querySelectorAll('.peg').forEach(p => p.classList.remove('drag-over'));
+    }
+
+    function resetGame(newCount) {
+        disksCount = newCount;
+        rods = [[], [], []];
+        for (let i = disksCount; i >= 1; i--) {
+            rods[0].push(i);
+        }
+        renderDisks();
+        clearErrorMessage();
+        if (autoPlaying) stopAutoPlay();
+    }
+
+    function clearErrorMessage() {
+        if (!messageDiv.innerHTML.includes('Auto') && !messageDiv.innerHTML.includes('solved')) {
+            messageDiv.innerHTML = '';
+        } else if (!autoPlaying) {
+            messageDiv.innerHTML = '';
+        }
+    }
+
+    function showError(msg) {
+        messageDiv.innerHTML = `<div class="error-msg">⚠️ ${msg}</div>`;
+    }
+
+    function showInfo(msg, isSuccess = false) {
+        messageDiv.innerHTML = `<div style="background:#d9f0e1; padding:6px 20px; border-radius:40px; color:#1b5e3a;">${msg}</div>`;
+        if (isSuccess && !autoPlaying) {
+            setTimeout(() => {
+                if (messageDiv.innerHTML.includes(msg)) clearErrorMessage();
+            }, 2800);
+        }
+    }
+
+    function isValidMove(fromPeg, toPeg) {
+        if (fromPeg === toPeg) return false;
+        const fromStack = rods[fromPeg];
+        const toStack = rods[toPeg];
+        if (fromStack.length === 0) return false;
+        const diskFrom = fromStack[fromStack.length - 1];
+        if (toStack.length === 0) return true;
+        const diskTo = toStack[toStack.length - 1];
+        return diskFrom < diskTo;
+    }
+
+    function performMove(fromPeg, toPeg, silent = false) {
+        if (!isValidMove(fromPeg, toPeg)) return false;
+        const disk = rods[fromPeg].pop();
+        rods[toPeg].push(disk);
+        renderDisks();
+        if (!silent && !autoPlaying && rods[2].length === disksCount) {
+            showInfo("🏆 PERFECT! You solved the Tower! 🏆", true);
+        }
+        return true;
+    }
+
+    // ----- Manual Drag (unchanged, works as before) -----
+    function onMouseDown(e) {
+        if (autoPlaying) {
+            showError("Auto mode active. Please wait for Show Me to finish.");
+            e.preventDefault();
+            return;
+        }
+        const disk = e.target.closest('.disk');
+        if (!disk) return;
+        e.preventDefault();
+
+        const parentPeg = disk.closest('.peg');
+        if (!parentPeg) return;
+        const sourcePegId = parseInt(parentPeg.getAttribute('data-peg-id'));
+        if (isNaN(sourcePegId)) return;
+
+        const disksContainer = parentPeg.querySelector('.disks-area');
+        const allDisks = Array.from(disksContainer.querySelectorAll('.disk'));
+        const topDisk = allDisks[allDisks.length - 1];
+        if (topDisk !== disk) {
+            showError("Only the top disk can be moved!");
+            return;
+        }
+
+        dragSourcePeg = sourcePegId;
+        draggedDisk = disk;
+        const rect = disk.getBoundingClientRect();
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        diskInitialOffsetX = dragStartX - rect.left;
+        diskInitialOffsetY = dragStartY - rect.top;
+
+        disk.classList.add('dragging');
+        disk.style.position = 'fixed';
+        disk.style.left = `${rect.left}px`;
+        disk.style.top = `${rect.top}px`;
+        disk.style.width = `${disk.offsetWidth}px`;
+        disk.style.margin = '0';
+        disk.style.zIndex = '9999';
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }
+
+    function onMouseMove(e) {
+        if (!draggedDisk) return;
+        e.preventDefault();
+        const newLeft = e.clientX - diskInitialOffsetX;
+        const newTop = e.clientY - diskInitialOffsetY;
+        draggedDisk.style.left = `${newLeft}px`;
+        draggedDisk.style.top = `${newTop}px`;
+
+        const elemUnderCursor = document.elementsFromPoint(e.clientX, e.clientY);
+        let targetPegDiv = null;
+        for (let el of elemUnderCursor) {
+            if (el.classList && el.classList.contains('peg')) {
+                targetPegDiv = el;
+                break;
+            }
+        }
+        document.querySelectorAll('.peg').forEach(p => p.classList.remove('drag-over'));
+        if (targetPegDiv) {
+            targetPegDiv.classList.add('drag-over');
+        }
+    }
+
+    function onMouseUp(e) {
+        if (!draggedDisk) {
+            cleanupDrag();
+            return;
+        }
+        e.preventDefault();
+
+        let targetPegId = null;
+        const elemUnderCursor = document.elementsFromPoint(e.clientX, e.clientY);
+        for (let el of elemUnderCursor) {
+            if (el.classList && el.classList.contains('peg')) {
+                const pid = el.getAttribute('data-peg-id');
+                if (pid !== null) targetPegId = parseInt(pid);
+                break;
+            }
+        }
+
+        let moveValid = false;
+        if (targetPegId !== null && dragSourcePeg !== null && targetPegId !== dragSourcePeg) {
+            if (isValidMove(dragSourcePeg, targetPegId)) {
+                performMove(dragSourcePeg, targetPegId);
+                moveValid = true;
+                clearErrorMessage();
+                if (rods[2].length === disksCount) showInfo("🎉 You won! 🎉", true);
+            } else if (monitorMode) {
+                showError("❌ Illegal move! Can't place larger on smaller.");
+            }
+        } else if (targetPegId === dragSourcePeg && monitorMode) {
+            showError("Move cancelled: same peg.");
+        } else if (targetPegId === null && monitorMode) {
+            showError("Drop disk onto a peg");
+        }
+        cleanupDrag();
+    }
+
+    function cleanupDrag() {
+        if (draggedDisk) {
+            draggedDisk.classList.remove('dragging');
+            draggedDisk.style.position = '';
+            draggedDisk.style.left = '';
+            draggedDisk.style.top = '';
+            draggedDisk.style.width = '';
+            draggedDisk.style.margin = '';
+            draggedDisk.style.zIndex = '';
+        }
+        document.querySelectorAll('.peg').forEach(p => p.classList.remove('drag-over'));
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        draggedDisk = null;
+        dragSourcePeg = null;
+        renderDisks();
+    }
+
+    // ----- REALISTIC TRAJECTORY ANIMATION for Show Me -----
+    // Moves disk: UP → HORIZONTAL → DOWN
+    async function animateRealisticMove(fromPeg, toPeg) {
+        return new Promise((resolve) => {
+            if (!isValidMove(fromPeg, toPeg)) {
+                resolve(false);
+                return;
+            }
+            
+            const fromPegDiv = document.getElementById(`peg-${fromPeg}`);
+            const toPegDiv = document.getElementById(`peg-${toPeg}`);
+            if (!fromPegDiv || !toPegDiv) { resolve(false); return; }
+            
+            const disksContainer = fromPegDiv.querySelector('.disks-area');
+            const diskElem = disksContainer.querySelector('.disk:last-child');
+            if (!diskElem) { resolve(false); return; }
+            
+            // Get source and target positions
+            const sourceRect = diskElem.getBoundingClientRect();
+            const targetDisksArea = toPegDiv.querySelector('.disks-area');
+            const targetRect = targetDisksArea.getBoundingClientRect();
+            
+            const diskWidth = diskElem.offsetWidth;
+            const diskHeight = 36;
+            const targetStackHeight = rods[toPeg].length; // before move
+            const finalBottomY = targetRect.bottom - (targetStackHeight + 1) * 40 + 4;
+            const finalX = targetRect.left + (targetRect.width / 2) - (diskWidth / 2);
+            
+            // Clone disk for animation
+            const clone = diskElem.cloneNode(true);
+            clone.classList.add('animated-disk');
+            clone.style.position = 'fixed';
+            clone.style.left = `${sourceRect.left}px`;
+            clone.style.top = `${sourceRect.top}px`;
+            clone.style.width = `${diskWidth}px`;
+            clone.style.margin = '0';
+            clone.style.transition = 'none';
+            clone.style.opacity = '0.95';
+            document.body.appendChild(clone);
+            
+            // Hide original temporarily
+            diskElem.style.visibility = 'hidden';
+            
+            // Step 1: Lift UP (move up by 120px)
+            const upY = sourceRect.top - 100;
+            clone.style.transition = 'top 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1)';
+            clone.style.top = `${upY}px`;
+            
+            setTimeout(() => {
+                // Step 2: Move horizontally across to destination peg's X
+                clone.style.transition = 'left 0.4s ease-in-out, top 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1)';
+                clone.style.left = `${finalX}px`;
+                // Maintain same height during horizontal movement
+                clone.style.top = `${upY}px`;
+                
+                setTimeout(() => {
+                    // Step 3: Move DOWN to final position on destination peg
+                    clone.style.transition = 'top 0.3s cubic-bezier(0.3, 0.0, 0.1, 1.0), left 0.05s linear';
+                    clone.style.top = `${finalBottomY}px`;
+                    
+                    setTimeout(() => {
+                        // Apply actual game state change
+                        const diskVal = rods[fromPeg].pop();
+                        rods[toPeg].push(diskVal);
+                        renderDisks();
+                        clone.remove();
+                        diskElem.style.visibility = '';
+                        resolve(true);
+                        
+                        if (rods[2].length === disksCount && autoPlaying) {
+                            stopAutoPlay();
+                            showInfo("✨ Show Me finished! Tower solved! ✨", true);
+                        }
+                    }, 300);
+                }, 420);
+            }, 260);
+        });
+    }
+
+    async function startShowMeAuto() {
+        if (autoPlaying) stopAutoPlay();
+        resetGame(disksCount);
+        clearErrorMessage();
+        showInfo("🤖 Show Me: Realistic trajectory (↑ up → across ↓ down)", false);
+        autoPlaying = true;
+        
+        const moves = [];
+        function generateMoves(n, from, to, aux) {
+            if (n === 1) {
+                moves.push({ from, to });
+                return;
+            }
+            generateMoves(n - 1, from, aux, to);
+            moves.push({ from, to });
+            generateMoves(n - 1, aux, to, from);
+        }
+        generateMoves(disksCount, 0, 2, 1);
+        autoMovesQueue = [...moves];
+        
+        async function processQueue() {
+            if (!autoPlaying) return;
+            if (autoMovesQueue.length === 0) {
+                stopAutoPlay();
+                showInfo("🎉 Auto-solver complete! Tower solved! 🎉", true);
+                return;
+            }
+            const next = autoMovesQueue.shift();
+            if (isValidMove(next.from, next.to)) {
+                await animateRealisticMove(next.from, next.to);
+                if (rods[2].length === disksCount) {
+                    stopAutoPlay();
+                    showInfo("✅ Solved successfully by Show Me.", true);
+                    return;
+                }
+                autoTimer = setTimeout(processQueue, 500); // slight pause between moves
+            } else {
+                stopAutoPlay();
+                showError("Auto-solver inconsistency.");
+            }
+        }
+        if (autoTimer) clearTimeout(autoTimer);
+        processQueue();
+    }
+
+    function stopAutoPlay() {
+        if (autoTimer) {
+            clearTimeout(autoTimer);
+            autoTimer = null;
+        }
+        autoPlaying = false;
+        autoMovesQueue = [];
+        document.querySelectorAll('.animated-disk').forEach(el => el.remove());
+        renderDisks();
+        if (!autoPlaying && messageDiv.innerHTML.includes("Auto")) {
+            setTimeout(() => { if (!autoPlaying) clearErrorMessage(); }, 500);
+        }
+    }
+
+    // ----- Build UI -----
+    function buildPegs() {
+        pegsContainer.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+            const pegDiv = document.createElement('div');
+            pegDiv.className = 'peg';
+            pegDiv.setAttribute('data-peg-id', i);
+            pegDiv.id = `peg-${i}`;
+            pegDiv.style.position = 'relative';
+            pegDiv.style.display = 'flex';
+            pegDiv.style.flexDirection = 'column';
+            pegDiv.style.alignItems = 'center';
+            pegDiv.style.justifyContent = 'flex-end';
+            
+            const disksArea = document.createElement('div');
+            disksArea.className = 'disks-area';
+            disksArea.style.position = 'absolute';
+            disksArea.style.bottom = '48px';
+            disksArea.style.left = '0';
+            disksArea.style.width = '100%';
+            disksArea.style.display = 'flex';
+            disksArea.style.flexDirection = 'column-reverse';
+            disksArea.style.alignItems = 'center';
+            disksArea.style.pointerEvents = 'none';
+            disksArea.style.zIndex = '20';
+            
+            const rod = document.createElement('div');
+            rod.className = 'peg-rod';
+            const horizontalBar = document.createElement('div');
+            horizontalBar.className = 'peg-base-bar';
+            const pegNumber = document.createElement('div');
+            pegNumber.className = 'peg-number';
+            pegNumber.innerText = `${i+1}`;
+            
+            pegDiv.appendChild(disksArea);
+            pegDiv.appendChild(rod);
+            pegDiv.appendChild(horizontalBar);
+            pegDiv.appendChild(pegNumber);
+            pegsContainer.appendChild(pegDiv);
+        }
+        resetGame(disksCount);
+    }
+
+    // Monitor mode
+    const monBtn = document.querySelector('[data-mode="monitor"]');
+    const unmonBtn = document.querySelector('[data-mode="unmonitor"]');
+    function setMonitorMode(mode) {
+        monitorMode = mode;
+        if (mode) {
+            monBtn.classList.add('active');
+            unmonBtn.classList.remove('active');
+        } else {
+            unmonBtn.classList.add('active');
+            monBtn.classList.remove('active');
+        }
+        if (!autoPlaying) clearErrorMessage();
+    }
+    monBtn.addEventListener('click', () => setMonitorMode(true));
+    unmonBtn.addEventListener('click', () => setMonitorMode(false));
+    setMonitorMode(true);
+
+    diskSelect.addEventListener('change', (e) => {
+        if (autoPlaying) stopAutoPlay();
+        const newVal = parseInt(e.target.value, 10);
+        disksCount = newVal;
+        resetGame(disksCount);
+    });
+
+    showMeBtn.addEventListener('click', () => {
+        if (autoPlaying) {
+            stopAutoPlay();
+            setTimeout(() => startShowMeAuto(), 150);
+        } else {
+            startShowMeAuto();
+        }
+    });
+
+    buildPegs();
+</script>
+</body>
+</html>
