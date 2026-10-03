@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rooms Before Move In</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; color: #333; }
+        h1, .instructions { text-align: center; }
+        .gallery { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }
+        .gallery-item { display: block; transition: transform .2s; }
+        .gallery-item:hover { transform: scale(1.03); }
+        .gallery-item img { display: block; width: 100%; height: auto; border-radius: 5px; box-shadow: 0 4px 8px #0002; }
+        .gallery-item:focus-visible { outline: 3px solid #236ac4; outline-offset: 4px; }
+        dialog { position: fixed; inset: 0; box-sizing: border-box; width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 50px 20px 20px; border: 0; background: #000e; color: white; }
+        dialog[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        dialog::backdrop { background: #000b; }
+        #popup-img { max-width: 100%; max-height: calc(100vh - 120px); width: auto; height: auto; object-fit: contain; }
+        .close { position: absolute; top: 8px; right: 20px; border: 0; background: transparent; color: white; font-size: 40px; cursor: pointer; }
+        #popup-status { margin: 12px 0 0; }
+        @media (max-width: 700px) { .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 400px) { .gallery { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <h1>Rooms Before Move In</h1>
+    <p class="instructions">Click a picture to see its full-size original.</p>
+    <main class="gallery" aria-label="Room photos">
+        <a class="gallery-item" href="original/backyard.jpg"><img src="resized/backyard.jpg" alt="backyard" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/balcolin.jpg"><img src="resized/balcolin.jpg" alt="balcolin" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/bathroom1.jpg"><img src="resized/bathroom1.jpg" alt="bathroom1" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/bedroomOne.jpg"><img src="resized/bedroomOne.jpg" alt="bedroomOne" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/bedroomThree1.jpg"><img src="resized/bedroomThree1.jpg" alt="bedroomThree1" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/bedroomTwo.jpg"><img src="resized/bedroomTwo.jpg" alt="bedroomTwo" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/bedroomTwo1.jpg"><img src="resized/bedroomTwo1.jpg" alt="bedroomTwo1" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/besroomThree.jpg"><img src="resized/besroomThree.jpg" alt="besroomThree" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/closetouter.jpg"><img src="resized/closetouter.jpg" alt="closetouter" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/dinning.jpg"><img src="resized/dinning.jpg" alt="dinning" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/dinningroom1.jpg"><img src="resized/dinningroom1.jpg" alt="dinningroom1" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/driveway.jpg"><img src="resized/driveway.jpg" alt="driveway" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/entranview.jpg"><img src="resized/entranview.jpg" alt="entranview" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/fronttree.jpg"><img src="resized/fronttree.jpg" alt="fronttree" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/kitchen.jpg"><img src="resized/kitchen.jpg" alt="kitchen" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/livingroom.jpg"><img src="resized/livingroom.jpg" alt="livingroom" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/livingroom1.jpg"><img src="resized/livingroom1.jpg" alt="livingroom1" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/masterbathroom.jpg"><img src="resized/masterbathroom.jpg" alt="masterbathroom" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/masterroom.jpg"><img src="resized/masterroom.jpg" alt="masterroom" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/masterroom1.jpg"><img src="resized/masterroom1.jpg" alt="masterroom1" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/masterroom2.jpg"><img src="resized/masterroom2.jpg" alt="masterroom2" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/officeroom.jpg"><img src="resized/officeroom.jpg" alt="officeroom" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/officeroom1.jpg"><img src="resized/officeroom1.jpg" alt="officeroom1" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/sittingroom.jpg"><img src="resized/sittingroom.jpg" alt="sittingroom" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/toilet1.jpg"><img src="resized/toilet1.jpg" alt="toilet1" loading="lazy" decoding="async"></a>
+    </main>
+    <dialog id="popup" aria-label="Full-size photo">
+        <button class="close" type="button" aria-label="Close full-size photo">&times;</button>
+        <img id="popup-img" alt="">
+        <p id="popup-status" role="status"></p>
+    </dialog>
+    <script>
+        const popup = document.getElementById('popup');
+        const image = document.getElementById('popup-img');
+        const status = document.getElementById('popup-status');
+        document.querySelectorAll('.gallery-item').forEach(link => {
+            link.addEventListener('click', event => {
+                if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey ||
+                        typeof popup.showModal !== 'function') return;
+                event.preventDefault();
+                status.textContent = 'Loading original photo…';
+                image.alt = link.querySelector('img').alt;
+                image.src = link.href;
+                popup.showModal();
+            });
+        });
+        image.addEventListener('load', () => { status.textContent = ''; });
+        image.addEventListener('error', () => { status.textContent = 'Unable to load the original photo.'; });
+        popup.querySelector('.close').addEventListener('click', () => popup.close());
+        popup.addEventListener('click', event => { if (event.target === popup) popup.close(); });
+        popup.addEventListener('close', () => { image.removeAttribute('src'); status.textContent = ''; });
+    </script>
+</body>
+</html>
