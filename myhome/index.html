@@ -9,6 +9,9 @@
         h1, .instructions { text-align: center; }
         .gallery { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }
         .gallery-item { display: block; transition: transform .2s; }
+        .gallery-item { color: inherit; text-decoration: none; }
+        .photo-title { display: block; padding: 10px 4px; text-align: center; font-weight: 600; line-height: 1.4; }
+        #popup-title { margin: 12px 0 0; text-align: center; font-size: 18px; }
         .gallery-item:hover { transform: scale(1.03); }
         .gallery-item img { display: block; width: 100%; height: auto; border-radius: 5px; box-shadow: 0 4px 8px #0002; }
         .gallery-item:focus-visible { outline: 3px solid #236ac4; outline-offset: 4px; }
@@ -26,35 +29,36 @@
     <h1>My Restored Home</h1>
     <p class="instructions">Click a picture to see its full-size original.</p>
     <main class="gallery" aria-label="Room photos">
-        <a class="gallery-item" href="original/backyard.jpg"><img src="resized/backyard.jpg" alt="backyard" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/balcolin.jpg"><img src="resized/balcolin.jpg" alt="balcolin" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/bathroom1.jpg"><img src="resized/bathroom1.jpg" alt="bathroom1" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/bedroomOne.jpg"><img src="resized/bedroomOne.jpg" alt="bedroomOne" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/bedroomThree1.jpg"><img src="resized/bedroomThree1.jpg" alt="bedroomThree1" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/bedroomTwo.jpg"><img src="resized/bedroomTwo.jpg" alt="bedroomTwo" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/bedroomTwo1.jpg"><img src="resized/bedroomTwo1.jpg" alt="bedroomTwo1" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/besroomThree.jpg"><img src="resized/besroomThree.jpg" alt="besroomThree" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/closetouter.jpg"><img src="resized/closetouter.jpg" alt="closetouter" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/dinning.jpg"><img src="resized/dinning.jpg" alt="dinning" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/dinningroom1.jpg"><img src="resized/dinningroom1.jpg" alt="dinningroom1" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/driveway.jpg"><img src="resized/driveway.jpg" alt="driveway" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/entranview.jpg"><img src="resized/entranview.jpg" alt="entranview" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/fronttree.jpg"><img src="resized/fronttree.jpg" alt="fronttree" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/kitchen.jpg"><img src="resized/kitchen.jpg" alt="kitchen" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/livingroom.jpg"><img src="resized/livingroom.jpg" alt="livingroom" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/livingroom1.jpg"><img src="resized/livingroom1.jpg" alt="livingroom1" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/masterbathroom.jpg"><img src="resized/masterbathroom.jpg" alt="masterbathroom" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/masterroom.jpg"><img src="resized/masterroom.jpg" alt="masterroom" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/masterroom1.jpg"><img src="resized/masterroom1.jpg" alt="masterroom1" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/masterroom2.jpg"><img src="resized/masterroom2.jpg" alt="masterroom2" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/officeroom.jpg"><img src="resized/officeroom.jpg" alt="officeroom" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/officeroom1.jpg"><img src="resized/officeroom1.jpg" alt="officeroom1" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/sittingroom.jpg"><img src="resized/sittingroom.jpg" alt="sittingroom" loading="lazy" decoding="async"></a>
-        <a class="gallery-item" href="original/toilet1.jpg"><img src="resized/toilet1.jpg" alt="toilet1" loading="lazy" decoding="async"></a>
+        <a class="gallery-item" href="original/backyard.jpg"><img src="resized/backyard.jpg" alt="Backyard" loading="lazy" decoding="async"><span class="photo-title">Backyard</span></a>
+        <a class="gallery-item" href="original/balcolin.jpg"><img src="resized/balcolin.jpg" alt="Balcony" loading="lazy" decoding="async"><span class="photo-title">Balcony</span></a>
+        <a class="gallery-item" href="original/bathroom1.jpg"><img src="resized/bathroom1.jpg" alt="Bathroom" loading="lazy" decoding="async"><span class="photo-title">Bathroom</span></a>
+        <a class="gallery-item" href="original/bedroomOne.jpg"><img src="resized/bedroomOne.jpg" alt="Bedroom One" loading="lazy" decoding="async"><span class="photo-title">Bedroom One</span></a>
+        <a class="gallery-item" href="original/bedroomThree1.jpg"><img src="resized/bedroomThree1.jpg" alt="Bedroom Three — View 2" loading="lazy" decoding="async"><span class="photo-title">Bedroom Three — View 2</span></a>
+        <a class="gallery-item" href="original/bedroomTwo.jpg"><img src="resized/bedroomTwo.jpg" alt="Bedroom Two — View 1" loading="lazy" decoding="async"><span class="photo-title">Bedroom Two — View 1</span></a>
+        <a class="gallery-item" href="original/bedroomTwo1.jpg"><img src="resized/bedroomTwo1.jpg" alt="Bedroom Two — View 2" loading="lazy" decoding="async"><span class="photo-title">Bedroom Two — View 2</span></a>
+        <a class="gallery-item" href="original/besroomThree.jpg"><img src="resized/besroomThree.jpg" alt="Bedroom Three — View 1" loading="lazy" decoding="async"><span class="photo-title">Bedroom Three — View 1</span></a>
+        <a class="gallery-item" href="original/closetouter.jpg"><img src="resized/closetouter.jpg" alt="Closet Exterior" loading="lazy" decoding="async"><span class="photo-title">Closet Exterior</span></a>
+        <a class="gallery-item" href="original/dinning.jpg"><img src="resized/dinning.jpg" alt="Dining Room — View 1" loading="lazy" decoding="async"><span class="photo-title">Dining Room — View 1</span></a>
+        <a class="gallery-item" href="original/dinningroom1.jpg"><img src="resized/dinningroom1.jpg" alt="Dining Room — View 2" loading="lazy" decoding="async"><span class="photo-title">Dining Room — View 2</span></a>
+        <a class="gallery-item" href="original/driveway.jpg"><img src="resized/driveway.jpg" alt="Driveway" loading="lazy" decoding="async"><span class="photo-title">Driveway</span></a>
+        <a class="gallery-item" href="original/entranview.jpg"><img src="resized/entranview.jpg" alt="Entrance View" loading="lazy" decoding="async"><span class="photo-title">Entrance View</span></a>
+        <a class="gallery-item" href="original/fronttree.jpg"><img src="resized/fronttree.jpg" alt="Front Yard Tree" loading="lazy" decoding="async"><span class="photo-title">Front Yard Tree</span></a>
+        <a class="gallery-item" href="original/kitchen.jpg"><img src="resized/kitchen.jpg" alt="Kitchen" loading="lazy" decoding="async"><span class="photo-title">Kitchen</span></a>
+        <a class="gallery-item" href="original/livingroom.jpg"><img src="resized/livingroom.jpg" alt="Living Room — View 1" loading="lazy" decoding="async"><span class="photo-title">Living Room — View 1</span></a>
+        <a class="gallery-item" href="original/livingroom1.jpg"><img src="resized/livingroom1.jpg" alt="Living Room — View 2" loading="lazy" decoding="async"><span class="photo-title">Living Room — View 2</span></a>
+        <a class="gallery-item" href="original/masterbathroom.jpg"><img src="resized/masterbathroom.jpg" alt="Primary Bathroom" loading="lazy" decoding="async"><span class="photo-title">Primary Bathroom</span></a>
+        <a class="gallery-item" href="original/masterroom.jpg"><img src="resized/masterroom.jpg" alt="Master Bedroom — View 1" loading="lazy" decoding="async"><span class="photo-title">Master Bedroom — View 1</span></a>
+        <a class="gallery-item" href="original/masterroom1.jpg"><img src="resized/masterroom1.jpg" alt="Master Bedroom — View 2" loading="lazy" decoding="async"><span class="photo-title">Master Bedroom — View 2</span></a>
+        <a class="gallery-item" href="original/masterroom2.jpg"><img src="resized/masterroom2.jpg" alt="Master Bedroom — View 3" loading="lazy" decoding="async"><span class="photo-title">Master Bedroom — View 3</span></a>
+        <a class="gallery-item" href="original/officeroom.jpg"><img src="resized/officeroom.jpg" alt="Home Office — View 1" loading="lazy" decoding="async"><span class="photo-title">Home Office — View 1</span></a>
+        <a class="gallery-item" href="original/officeroom1.jpg"><img src="resized/officeroom1.jpg" alt="Home Office — View 2" loading="lazy" decoding="async"><span class="photo-title">Home Office — View 2</span></a>
+        <a class="gallery-item" href="original/sittingroom.jpg"><img src="resized/sittingroom.jpg" alt="Sitting Room" loading="lazy" decoding="async"><span class="photo-title">Sitting Room</span></a>
+        <a class="gallery-item" href="original/toilet1.jpg"><img src="resized/toilet1.jpg" alt="Toilet" loading="lazy" decoding="async"><span class="photo-title">Toilet</span></a>
     </main>
     <dialog id="popup" aria-label="Full-size photo">
         <button class="close" type="button" aria-label="Close full-size photo">&times;</button>
         <img id="popup-img" alt="">
+        <p id="popup-title"></p>
         <p id="popup-status" role="status"></p>
     </dialog>
     <script>
@@ -68,6 +72,7 @@
                 event.preventDefault();
                 status.textContent = 'Loading original photo…';
                 image.alt = link.querySelector('img').alt;
+                document.getElementById('popup-title').textContent = image.alt;
                 image.src = link.href;
                 popup.showModal();
             });
