@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: ningbo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz.txt
+    envVars:
+      - key: PORT
+        value: "8080"
